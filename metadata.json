@@ -1,0 +1,7 @@
+{
+  "name": "Neural Audio Workstation (NAW)",
+  "description": "A production-grade AI music creation environment featuring hybrid AR/Diffusion architecture simulation, stem-aware mixing, and spectral inpainting.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
