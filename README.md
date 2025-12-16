@@ -228,14 +228,15 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 
 ## 📋 Roadmap
 
-### Phase 1: Foundation (Current - Q1 2025) ✅
+### Phase 1: Foundation (Q1 2025) ✅
 - [x] Core UI and timeline
 - [x] Stem-aware architecture
 - [x] Semantic planner integration
 - [x] Basic playback simulation
 - [x] Project save/load
 
-### Phase 2: Neural Engine (Q2 2025)
+### Phase 2: Neural Engine (Current - Q2 2025) 🚧
+- [x] Architecture design and stubs
 - [ ] Integrate DAC audio codec
 - [ ] Implement Flow Matching renderer
 - [ ] Add ControlNet adapters
