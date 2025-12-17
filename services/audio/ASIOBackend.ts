@@ -12,6 +12,8 @@
  * @see ROADMAP.md § Phase 4
  */
 
+import { LATENCY_BUDGET } from '../../config/optimization/TensorRTConfig';
+
 /**
  * Audio backend type
  */
@@ -290,7 +292,7 @@ export class ASIOBackend {
    * Target: <100ms latency for real-time inference
    */
   isRealTimeCapable(): boolean {
-    return this.getLatency() < 100;
+    return this.getLatency() < LATENCY_BUDGET.TOTAL;
   }
 
   /**

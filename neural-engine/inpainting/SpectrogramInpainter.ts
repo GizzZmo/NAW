@@ -229,8 +229,7 @@ export class SpectrogramInpainter {
 
     console.log('[Inpainting] Searching for similar segments...');
     
-    // Stub: Return empty array
-    // In real implementation:
+    // TODO Phase 3.2: Implement similarity search
     // - Extract MFCC or other features
     // - Compute DTW or cosine similarity
     // - Return top K similar positions

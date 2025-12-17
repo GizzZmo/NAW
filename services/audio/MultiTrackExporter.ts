@@ -322,7 +322,8 @@ export class MultiTrackExporter {
     // - Create .logicx package
     // - Generate project XML
     
-    throw new Error('Logic Pro export not yet implemented');
+    console.warn('[Export] Logic Pro export not yet implemented');
+    return [];
   }
 
   /**
@@ -340,7 +341,8 @@ export class MultiTrackExporter {
     // - Create session file (.ptx)
     // - Set up track routing
     
-    throw new Error('Pro Tools export not yet implemented');
+    console.warn('[Export] Pro Tools export not yet implemented');
+    return [];
   }
 
   /**

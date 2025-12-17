@@ -307,10 +307,23 @@ export const LATENCY_BUDGET = {
 
 /**
  * Check if hardware can achieve real-time performance
+ * Uses the GPU's recommended precision mode for accurate assessment
  */
 export function canAchieveRealTime(gpuProfile: HardwareConfig): boolean {
-  // Use FP16 latency as reference
-  return gpuProfile.estimatedLatency.fp16 < LATENCY_BUDGET.TOTAL;
+  const precision = gpuProfile.recommendedPrecision;
+  
+  // Check latency based on recommended precision
+  switch (precision) {
+    case PrecisionMode.FP32:
+      return gpuProfile.estimatedLatency.fp32 < LATENCY_BUDGET.TOTAL;
+    case PrecisionMode.FP16:
+      return gpuProfile.estimatedLatency.fp16 < LATENCY_BUDGET.TOTAL;
+    case PrecisionMode.INT8:
+      return gpuProfile.estimatedLatency.int8 < LATENCY_BUDGET.TOTAL;
+    default:
+      // Default to FP16 if unknown
+      return gpuProfile.estimatedLatency.fp16 < LATENCY_BUDGET.TOTAL;
+  }
 }
 
 /**
