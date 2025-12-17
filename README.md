@@ -64,14 +64,21 @@ NAW implements a **Hybrid "Compose-then-Render" Architecture** inspired by cutti
 - Project save/load (JSON format)
 - Real-time playback simulation
 - Phase 2 neural engine architecture (DAC codec, Semantic Planner, Acoustic Renderer)
+- Phase 3 advanced features architecture (ControlNet, CLAP, Inpainting, Export)
+- Phase 4 production architecture (VST/AU plugin, ASIO, TensorRT, Commercial licensing)
 - Comprehensive test suite (35 tests) and demo workflow
 
 **🚧 In Development (See [ROADMAP.md](ROADMAP.md)):**
 - Neural Audio Codec integration (actual DAC/EnCodec models)
 - Actual Flow Matching renderer for Stage 2 (trained model)
-- ControlNet adapters for fine-grained control
-- Audio-based conditioning (CLAP embeddings)
-- VST/AU plugin architecture (JUCE)
+- ControlNet adapters implementation (fine-grained control)
+- CLAP audio conditioning implementation (audio reference conditioning)
+- Spectrogram inpainting implementation (surgical audio editing)
+- Multi-track export implementation (WAV stems, DAW projects)
+- VST/AU plugin implementation (JUCE framework)
+- ASIO audio backend (low-latency real-time audio)
+- TensorRT optimization (real-time inference <100ms)
+- Commercial licensing launch (dual-license model)
 
 ## 🎨 Key Features
 
@@ -245,20 +252,31 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
   - [x] End-to-end pipeline demonstration
 - [ ] Integrate DAC audio codec (real neural model)
 - [ ] Implement Flow Matching renderer (real neural model)
-- [ ] Add ControlNet adapters
 - [ ] Real audio generation (not simulation)
 
-### Phase 3: Advanced Features (Q3 2025)
+### Phase 3: Advanced Features (Q3 2025) 🚧
+- [x] Architecture design and stubs
+  - [x] ControlNet adapters architecture
+  - [x] CLAP audio conditioning architecture
+  - [x] Spectrogram inpainting architecture
+  - [x] Multi-track export architecture
+- [ ] ControlNet adapters (actual implementation)
+- [ ] CLAP-based audio conditioning (actual implementation)
 - [ ] Spectrogram inpainting (actual implementation)
-- [ ] CLAP-based audio conditioning
-- [ ] Outpainting for loop generation
-- [ ] Multi-track export
+- [ ] Outpainting for loop generation (actual implementation)
+- [ ] Multi-track export (actual implementation)
 
-### Phase 4: Production Ready (Q4 2025)
-- [ ] VST/AU plugin (JUCE)
+### Phase 4: Production Ready (Q4 2025) 🚧
+- [x] Architecture design and documentation
+  - [x] VST/AU plugin architecture (JUCE)
+  - [x] ASIO audio backend design
+  - [x] TensorRT optimization configuration
+  - [x] Commercial licensing structure
+- [ ] VST/AU plugin implementation
+- [ ] ASIO audio backend implementation
 - [ ] TensorRT optimization
 - [ ] Real-time inference (<100ms latency)
-- [ ] Commercial licensing
+- [ ] Commercial licensing launch
 
 See [ROADMAP.md](ROADMAP.md) for complete details.
 
@@ -277,12 +295,26 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting PRs.
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file for details.
+This project is available under a **dual-license model**:
+
+### Open Source (MIT License)
+Free for personal, educational, and non-commercial use. See [LICENSE](LICENSE) file for details.
+
+### Commercial License
+Required for commercial deployment, monetization, and production use. See [COMMERCIAL_LICENSE.md](docs/COMMERCIAL_LICENSE.md) for details.
+
+**Tiers:**
+- **Individual Producer**: $99/year (independent artists)
+- **Professional Studio**: $499/year (up to 5 users)
+- **Enterprise**: $2,999/year + custom (unlimited usage)
 
 **Note on AI Model Licensing:**
 - The current Gemini integration is for research/prototyping
-- Future neural models must use permissive licenses (Apache 2.0, MIT) for commercial use
+- Future neural models will use permissive licenses (Apache 2.0, MIT)
 - Models like MusicGen (CC-BY-NC) require commercial licensing from Meta
+- NAW is committed to "Fairly Trained" certification for ethical AI
+
+For commercial licensing inquiries: commercial@naw-audio.com
 
 ## 🙏 Acknowledgments
 
