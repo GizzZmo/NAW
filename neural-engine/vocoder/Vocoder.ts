@@ -316,7 +316,12 @@ export async function decodeMix(
   }
 
   // Normalize to prevent clipping (simple peak normalization)
-  const peak = Math.max(...Array.from(mixed).map(Math.abs));
+  let peak = 0;
+  for (let i = 0; i < mixed.length; i++) {
+    const abs = Math.abs(mixed[i]);
+    if (abs > peak) peak = abs;
+  }
+  
   if (peak > 1.0) {
     const gain = 0.95 / peak; // Leave a bit of headroom
     for (let i = 0; i < mixed.length; i++) {

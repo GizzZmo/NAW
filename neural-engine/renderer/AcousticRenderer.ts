@@ -304,9 +304,9 @@ export class AcousticRenderer {
 }
 
 /**
- * Two-stage pipeline: Semantic Planning + Acoustic Rendering
+ * Three-stage pipeline: Semantic Planning + Acoustic Rendering + Vocoding
  * 
- * This is the main entry point for the hybrid architecture.
+ * This is the main entry point for the complete neural audio generation pipeline.
  * 
  * @example
  * ```typescript
@@ -316,6 +316,7 @@ export class AcousticRenderer {
  *   text: "Uplifting house track",
  *   bpm: 128,
  *   bars: 32,
+ *   quality: 'balanced',
  * });
  * ```
  */
@@ -327,12 +328,12 @@ export interface MusicGenerationPrompt {
 }
 
 /**
- * Generate music using the two-stage pipeline
+ * Generate music using the three-stage pipeline
  * 
- * This is the complete implementation of the hybrid architecture:
- * 1. Semantic Planner generates coarse structure
- * 2. Acoustic Renderer adds fine details
- * 3. Vocoder decodes to audio
+ * This is the complete implementation of the neural architecture:
+ * 1. Semantic Planner generates coarse structure (RVQ codes 0-1)
+ * 2. Acoustic Renderer adds fine details (RVQ codes 2-15)
+ * 3. Vocoder decodes latents to audio waveforms
  * 
  * @param prompt - Music generation parameters
  * @param onProgress - Optional progress callback
@@ -342,7 +343,7 @@ export async function generateMusic(
   prompt: MusicGenerationPrompt,
   onProgress?: (stage: string, progress: number) => void
 ): Promise<Map<string, Float32Array>> {
-  console.log('[Pipeline] Starting two-stage generation...');
+  console.log('[Pipeline] Starting three-stage generation...');
   console.log(`[Pipeline] Prompt: "${prompt.text}"`);
   console.log(`[Pipeline] BPM: ${prompt.bpm}, Bars: ${prompt.bars}`);
   
