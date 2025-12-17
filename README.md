@@ -63,10 +63,12 @@ NAW implements a **Hybrid "Compose-then-Render" Architecture** inspired by cutti
 - Professional mixer with per-stem controls
 - Project save/load (JSON format)
 - Real-time playback simulation
+- Phase 2 neural engine architecture (DAC codec, Semantic Planner, Acoustic Renderer)
+- Comprehensive test suite (35 tests) and demo workflow
 
 **🚧 In Development (See [ROADMAP.md](ROADMAP.md)):**
-- Neural Audio Codec integration (DAC/EnCodec)
-- Actual Flow Matching renderer for Stage 2
+- Neural Audio Codec integration (actual DAC/EnCodec models)
+- Actual Flow Matching renderer for Stage 2 (trained model)
 - ControlNet adapters for fine-grained control
 - Audio-based conditioning (CLAP embeddings)
 - VST/AU plugin architecture (JUCE)
@@ -237,8 +239,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 
 ### Phase 2: Neural Engine (Current - Q2 2025) 🚧
 - [x] Architecture design and stubs
-- [ ] Integrate DAC audio codec
-- [ ] Implement Flow Matching renderer
+  - [x] DAC codec architecture with working tests
+  - [x] Semantic planner architecture with working tests
+  - [x] Acoustic renderer architecture with working tests
+  - [x] End-to-end pipeline demonstration
+- [ ] Integrate DAC audio codec (real neural model)
+- [ ] Implement Flow Matching renderer (real neural model)
 - [ ] Add ControlNet adapters
 - [ ] Real audio generation (not simulation)
 
