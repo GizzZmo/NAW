@@ -76,6 +76,17 @@ export {
   quickInpaint,
 } from './inpainting/SpectrogramInpainter';
 
+// Vocoder exports
+export {
+  Vocoder,
+  type VocoderConfig,
+  type VocoderResult,
+  VocoderType,
+  DEFAULT_VOCODER_CONFIG,
+  quickDecode,
+  decodeMix,
+} from './vocoder/Vocoder';
+
 /**
  * Neural Engine version
  */
@@ -104,6 +115,7 @@ export interface NeuralEngineStatus {
     controlNet: boolean;
     clap: boolean;
     inpainting: boolean;
+    vocoder: boolean;
   };
 }
 
@@ -121,6 +133,7 @@ export function getNeuralEngineStatus(): NeuralEngineStatus {
       controlNet: false, // ControlNet adapters not yet implemented
       clap: false, // CLAP model not yet implemented
       inpainting: false, // Inpainting diffusion not yet implemented
+      vocoder: false, // Vocoder not yet implemented
     },
   };
 }

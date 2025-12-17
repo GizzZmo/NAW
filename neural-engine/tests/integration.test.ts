@@ -30,9 +30,18 @@ import {
 } from '../inpainting/SpectrogramInpainter';
 
 import {
+  // Vocoder exports
+  Vocoder,
+  VocoderType,
+  DEFAULT_VOCODER_CONFIG,
+  decodeMix,
+} from '../vocoder/Vocoder';
+
+import {
   // Neural engine status
   getNeuralEngineStatus,
   NEURAL_ENGINE_VERSION,
+  generateMusic,
 } from '../index';
 
 /**
@@ -313,6 +322,110 @@ async function runTests() {
     }
     if (status.components.inpainting === undefined) {
       throw new Error('Inpainting status missing');
+    }
+    if (status.components.vocoder === undefined) {
+      throw new Error('Vocoder status missing');
+    }
+  });
+
+  // Vocoder Tests
+  console.log('\nVocoder Tests:');
+
+  await runner.test('Vocoder: Initialize', async () => {
+    const vocoder = new Vocoder();
+    await vocoder.initialize();
+    
+    if (!vocoder.isInitialized()) {
+      throw new Error('Vocoder not initialized');
+    }
+  });
+
+  await runner.test('Vocoder: Decode latent', async () => {
+    const vocoder = new Vocoder({ type: VocoderType.VOCOS });
+    await vocoder.initialize();
+    
+    // Create a dummy latent
+    const latent = {
+      codes: Array(16).fill(0).map(() => Array(100).fill(0)),
+      timeSteps: 100,
+      config: {
+        sampleRate: 44100,
+        latentRate: 24000,
+        numCodebooks: 16,
+        codebookSize: 1024,
+        semanticCodebooks: 2,
+      },
+    };
+    
+    const result = await vocoder.decode(latent);
+    
+    if (result.audio.length === 0) {
+      throw new Error('No audio in result');
+    }
+    if (result.vocoderType !== VocoderType.VOCOS) {
+      throw new Error('Wrong vocoder type');
+    }
+    if (result.processingTime <= 0) {
+      throw new Error('Invalid processing time');
+    }
+  });
+
+  await runner.test('Vocoder: Switch vocoder type', async () => {
+    const vocoder = new Vocoder({ type: VocoderType.VOCOS });
+    await vocoder.initialize();
+    
+    await vocoder.switchVocoder(VocoderType.DISCODER);
+    
+    const config = vocoder.getConfig();
+    if (config.type !== VocoderType.DISCODER) {
+      throw new Error('Vocoder type not switched');
+    }
+  });
+
+  await runner.test('Vocoder: Decode and mix stems', async () => {
+    // Create dummy latents for 4 stems
+    const latents = Array(4).fill(0).map(() => ({
+      codes: Array(16).fill(0).map(() => Array(50).fill(0)),
+      timeSteps: 50,
+      config: {
+        sampleRate: 44100,
+        latentRate: 24000,
+        numCodebooks: 16,
+        codebookSize: 1024,
+        semanticCodebooks: 2,
+      },
+    }));
+    
+    const mixed = await decodeMix(latents, ['DRUMS', 'BASS', 'VOCALS', 'OTHER']);
+    
+    if (mixed.length === 0) {
+      throw new Error('No mixed audio');
+    }
+  });
+
+  // Full Pipeline Test
+  console.log('\nFull Pipeline Tests:');
+
+  await runner.test('Pipeline: generateMusic', async () => {
+    const stems = await generateMusic({
+      text: 'Test music generation',
+      bpm: 120,
+      bars: 2,
+      quality: 'fast',
+    });
+    
+    if (stems.size !== 4) {
+      throw new Error('Expected 4 stems');
+    }
+    if (!stems.has('DRUMS') || !stems.has('BASS') || !stems.has('VOCALS') || !stems.has('OTHER')) {
+      throw new Error('Missing stems');
+    }
+    
+    // Check each stem has audio
+    for (const [name, audio] of stems.entries()) {
+      if (audio.length === 0) {
+        throw new Error(`${name} has no audio`);
+      }
     }
   });
 
