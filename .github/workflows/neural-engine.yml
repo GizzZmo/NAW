@@ -1,0 +1,54 @@
+name: Neural Engine Tests
+
+on:
+  push:
+    branches: [ main, develop, copilot/** ]
+    paths:
+      - 'neural-engine/**'
+      - 'package.json'
+      - 'tsconfig.json'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'neural-engine/**'
+      - 'package.json'
+      - 'tsconfig.json'
+
+permissions:
+  contents: read
+
+jobs:
+  test-neural-engine:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run neural engine tests
+      run: npm test
+    
+    - name: Run neural engine demo
+      run: npm run demo
+    
+    - name: Verify Phase 2 architecture
+      run: |
+        echo "Verifying Phase 2 neural engine components..."
+        
+        # Check that all required files exist
+        test -f neural-engine/index.ts
+        test -f neural-engine/codec/DACCodec.ts
+        test -f neural-engine/planner/SemanticPlanner.ts
+        test -f neural-engine/renderer/AcousticRenderer.ts
+        test -f neural-engine/demo.ts
+        test -f neural-engine/test.ts
+        
+        echo "✓ All Phase 2 components present"

@@ -84,26 +84,59 @@ const audio = await codec.decode(latents[0]);
 ## 📋 Implementation Status
 
 ### Phase 2.1: Neural Audio Codec (April 2025)
-- [ ] DAC encoder implementation
-- [ ] DAC decoder implementation
-- [ ] RVQ quantization
-- [ ] Latent space visualization
+- [x] DAC encoder implementation (stub)
+- [x] DAC decoder implementation (stub)
+- [x] RVQ quantization (stub)
+- [x] Latent space visualization (stub)
 - [ ] EnCodec compatibility layer
+- [x] **Working test suite**
 
 ### Phase 2.2: Semantic Planner (May 2025)
-- [ ] Transformer-XL architecture
-- [ ] Multi-stream prediction
+- [x] Transformer-XL architecture (stub)
+- [x] Multi-stream prediction (stub)
 - [ ] Training data pipeline
 - [ ] ONNX export and INT8 quantization
 - [ ] Alternative: Mamba-based planner
+- [x] **Working test suite**
 
 ### Phase 2.3: Acoustic Renderer (June 2025)
-- [ ] Flow Matching architecture
-- [ ] DiT backbone implementation
-- [ ] CLAP text conditioning
-- [ ] Classifier-free guidance
+- [x] Flow Matching architecture (stub)
+- [x] DiT backbone implementation (stub)
+- [x] CLAP text conditioning (stub)
+- [x] Classifier-free guidance (stub)
 - [ ] TensorRT optimization
 - [ ] Vocoder integration (Vocos/DisCoder)
+- [x] **Working test suite**
+
+## 🧪 Testing
+
+### Run Tests
+
+```bash
+npm test
+```
+
+The test suite validates:
+- Component initialization
+- Configuration management
+- Encoding/decoding pipeline
+- Semantic planning
+- Acoustic rendering
+- End-to-end pipeline
+
+### Run Demo
+
+```bash
+npm run demo
+```
+
+The demo shows:
+- Full two-stage pipeline in action
+- Progress reporting
+- Stem generation
+- Audio decoding
+
+All tests currently pass with stub implementations. Real neural models will be integrated progressively.
 
 ## 🔬 Research References
 
