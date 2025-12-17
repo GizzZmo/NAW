@@ -43,10 +43,43 @@ export {
   type MusicGenerationPrompt,
 } from './renderer/AcousticRenderer';
 
+// ControlNet exports
+export {
+  ControlNet,
+  type ControlNetConfig,
+  type ControlSignal,
+  ControlType,
+  DEFAULT_CONTROLNET_CONFIG,
+  type StyleAdapter,
+  STYLE_ADAPTERS,
+  loadStyleAdapter,
+} from './control/ControlNet';
+
+// CLAP exports
+export {
+  CLAP,
+  type CLAPConfig,
+  type AudioEmbedding,
+  type TextEmbedding,
+  DEFAULT_CLAP_CONFIG,
+  MUSIC_STYLE_TAGS,
+} from './conditioning/CLAP';
+
+// Inpainting exports
+export {
+  SpectrogramInpainter,
+  type InpaintingConfig,
+  type InpaintingMask,
+  type InpaintingResult,
+  InpaintingMethod,
+  DEFAULT_INPAINTING_CONFIG,
+  quickInpaint,
+} from './inpainting/SpectrogramInpainter';
+
 /**
  * Neural Engine version
  */
-export const NEURAL_ENGINE_VERSION = '0.1.0-alpha';
+export const NEURAL_ENGINE_VERSION = '0.2.0-alpha';
 
 /**
  * Check if neural engine is ready for use
@@ -68,6 +101,9 @@ export interface NeuralEngineStatus {
     codec: boolean;
     planner: boolean;
     renderer: boolean;
+    controlNet: boolean;
+    clap: boolean;
+    inpainting: boolean;
   };
 }
 
@@ -82,6 +118,9 @@ export function getNeuralEngineStatus(): NeuralEngineStatus {
       codec: false, // DAC not yet implemented
       planner: false, // Transformer-XL not yet implemented
       renderer: false, // Flow Matching not yet implemented
+      controlNet: false, // ControlNet adapters not yet implemented
+      clap: false, // CLAP model not yet implemented
+      inpainting: false, // Inpainting diffusion not yet implemented
     },
   };
 }

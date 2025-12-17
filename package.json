@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "tsx neural-engine/test.ts",
+    "test:integration": "tsx neural-engine/tests/integration.test.ts",
     "demo": "tsx neural-engine/demo.ts"
   },
   "dependencies": {
