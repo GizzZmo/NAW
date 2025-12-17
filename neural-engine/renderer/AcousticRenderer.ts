@@ -304,9 +304,9 @@ export class AcousticRenderer {
 }
 
 /**
- * Two-stage pipeline: Semantic Planning + Acoustic Rendering
+ * Three-stage pipeline: Semantic Planning + Acoustic Rendering + Vocoding
  * 
- * This is the main entry point for the hybrid architecture.
+ * This is the main entry point for the complete neural audio generation pipeline.
  * 
  * @example
  * ```typescript
@@ -316,6 +316,7 @@ export class AcousticRenderer {
  *   text: "Uplifting house track",
  *   bpm: 128,
  *   bars: 32,
+ *   quality: 'balanced',
  * });
  * ```
  */
@@ -327,20 +328,119 @@ export interface MusicGenerationPrompt {
 }
 
 /**
- * Generate music using the two-stage pipeline
+ * Generate music using the three-stage pipeline
  * 
- * TODO Phase 2: Wire up with actual codec
- * - Initialize all components
- * - Run semantic planner
- * - Run acoustic renderer
- * - Decode with DAC codec
+ * This is the complete implementation of the neural architecture:
+ * 1. Semantic Planner generates coarse structure (RVQ codes 0-1)
+ * 2. Acoustic Renderer adds fine details (RVQ codes 2-15)
+ * 3. Vocoder decodes latents to audio waveforms
+ * 
+ * @param prompt - Music generation parameters
+ * @param onProgress - Optional progress callback
+ * @returns Map of stem names to audio buffers
  */
 export async function generateMusic(
   prompt: MusicGenerationPrompt,
   onProgress?: (stage: string, progress: number) => void
 ): Promise<Map<string, Float32Array>> {
-  console.log('[Pipeline] Starting two-stage generation...');
+  console.log('[Pipeline] Starting three-stage generation...');
+  console.log(`[Pipeline] Prompt: "${prompt.text}"`);
+  console.log(`[Pipeline] BPM: ${prompt.bpm}, Bars: ${prompt.bars}`);
   
-  // Stub: In real implementation, coordinate all components
-  throw new Error('Full pipeline not yet implemented (Phase 2)');
+  // Dynamic import to avoid circular dependency
+  const { DACCodec } = await import('../codec/DACCodec');
+  const { SemanticPlanner } = await import('../planner/SemanticPlanner');
+  const { Vocoder, VocoderType } = await import('../vocoder/Vocoder');
+  
+  // Initialize all components
+  onProgress?.('Initializing', 0);
+  
+  const codec = new DACCodec();
+  const planner = new SemanticPlanner();
+  const renderer = new AcousticRenderer();
+  
+  // Determine vocoder type based on quality setting
+  let vocoderType = VocoderType.VOCOS;
+  if (prompt.quality === 'high') {
+    vocoderType = VocoderType.DISCODER;
+  } else if (prompt.quality === 'balanced') {
+    vocoderType = VocoderType.HIFIGAN;
+  }
+  
+  const vocoder = new Vocoder({ type: vocoderType });
+  
+  // Set quality for renderer
+  if (prompt.quality) {
+    renderer.setQuality(prompt.quality);
+  }
+  
+  console.log('[Pipeline] Initializing components...');
+  await Promise.all([
+    codec.initialize(),
+    planner.initialize(),
+    renderer.initialize(),
+    vocoder.initialize(),
+  ]);
+  
+  // Stage 1: Semantic Planning
+  onProgress?.('Semantic Planning', 10);
+  console.log('[Pipeline] Stage 1: Semantic Planning');
+  
+  const skeleton = await planner.generate(
+    {
+      text: prompt.text,
+      bpm: prompt.bpm,
+      bars: prompt.bars,
+    },
+    (progress) => {
+      // Map planner progress (0-100) to stage progress (10-40)
+      const stageProgress = 10 + (progress / 100) * 30;
+      onProgress?.('Semantic Planning', stageProgress);
+    }
+  );
+  
+  console.log(`[Pipeline] Generated skeleton: ${skeleton.stemNames.length} stems, ${skeleton.timeSteps} time steps`);
+  
+  // Stage 2: Acoustic Rendering
+  onProgress?.('Acoustic Rendering', 40);
+  console.log('[Pipeline] Stage 2: Acoustic Rendering');
+  
+  const latents = await renderer.render(
+    {
+      text: prompt.text,
+      semanticTokens: skeleton.tokens,
+    },
+    (renderProgress) => {
+      // Map render progress to stage progress (40-80)
+      const progress = renderProgress.step / renderProgress.totalSteps;
+      const stageProgress = 40 + progress * 40;
+      onProgress?.('Acoustic Rendering', stageProgress);
+    }
+  );
+  
+  console.log(`[Pipeline] Rendered ${latents.length} latents`);
+  
+  // Stage 3: Vocoding (decode to audio)
+  onProgress?.('Vocoding', 80);
+  console.log('[Pipeline] Stage 3: Vocoding');
+  
+  const stems = new Map<string, Float32Array>();
+  
+  for (let i = 0; i < latents.length; i++) {
+    const stemName = skeleton.stemNames[i];
+    console.log(`[Pipeline] Decoding ${stemName}...`);
+    
+    const result = await vocoder.decode(latents[i]);
+    stems.set(stemName, result.audio);
+    
+    // Update progress
+    const progress = 80 + ((i + 1) / latents.length) * 20;
+    onProgress?.('Vocoding', progress);
+  }
+  
+  onProgress?.('Complete', 100);
+  console.log('[Pipeline] Generation complete!');
+  console.log(`[Pipeline] Generated ${stems.size} stems`);
+  
+  return stems;
 }

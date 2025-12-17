@@ -14,7 +14,10 @@ import {
   DACCodec,
   SemanticPlanner,
   AcousticRenderer,
+  Vocoder,
+  VocoderType,
   getNeuralEngineStatus,
+  generateMusic,
   type SemanticPrompt,
   type RenderPrompt,
 } from './index';
@@ -96,15 +99,45 @@ async function runDemo() {
   console.log(`  - Codebooks per latent: ${latents[0].codes.length}`);
   console.log();
 
-  // Decode to audio
-  console.log('Decoding to audio...');
+  // Stage 3: Vocoding (Decode to audio)
+  console.log('Stage 3: Vocoding');
   console.log('-'.repeat(60));
+
+  const vocoder = new Vocoder({ type: VocoderType.VOCOS });
+  await vocoder.initialize();
 
   const audioStems = new Map<string, Float32Array>();
   for (let i = 0; i < latents.length; i++) {
-    const audio = await codec.decode(latents[i]);
-    audioStems.set(skeleton.stemNames[i], audio);
-    console.log(`  ✓ ${skeleton.stemNames[i]}: ${audio.length} samples`);
+    const result = await vocoder.decode(latents[i]);
+    audioStems.set(skeleton.stemNames[i], result.audio);
+    console.log(`  ✓ ${skeleton.stemNames[i]}: ${result.audio.length} samples (${result.rtf?.toFixed(1)}x realtime)`);
+  }
+  console.log();
+
+  // Demonstrate full pipeline with generateMusic
+  console.log('Full Pipeline Demo (generateMusic)');
+  console.log('-'.repeat(60));
+  console.log('Generating 4 bars of music with all stages integrated...');
+  console.log();
+
+  const stems = await generateMusic(
+    {
+      text: 'Energetic techno with driving bassline',
+      bpm: 140,
+      bars: 4,
+      quality: 'balanced',
+    },
+    (stage, progress) => {
+      if (progress % 25 === 0 || progress === 100) {
+        console.log(`  ${stage}: ${progress.toFixed(0)}%`);
+      }
+    }
+  );
+
+  console.log();
+  console.log('✓ Full pipeline complete:');
+  for (const [name, audio] of stems.entries()) {
+    console.log(`  - ${name}: ${audio.length} samples`);
   }
   console.log();
 
@@ -114,9 +147,19 @@ async function runDemo() {
   console.log('='.repeat(60));
   console.log();
   console.log('Summary:');
-  console.log(`  - Generated ${skeleton.stemNames.length} stems`);
+  console.log(`  - Generated ${skeleton.stemNames.length} stems (manual pipeline)`);
   console.log(`  - Total audio samples: ${Array.from(audioStems.values()).reduce((sum, arr) => sum + arr.length, 0)}`);
-  console.log(`  - Pipeline stages: Semantic Planning → Acoustic Rendering → Audio Decoding`);
+  console.log(`  - Generated ${stems.size} stems (full pipeline)`);
+  console.log(`  - Pipeline stages: Semantic Planning → Acoustic Rendering → Vocoding`);
+  console.log();
+  console.log('Architecture Complete:');
+  console.log('  ✓ DAC Codec');
+  console.log('  ✓ Semantic Planner (Transformer)');
+  console.log('  ✓ Acoustic Renderer (Flow Matching)');
+  console.log('  ✓ Vocoder (Vocos/DisCoder/HiFiGAN)');
+  console.log('  ✓ ControlNet Adapters');
+  console.log('  ✓ CLAP Conditioning');
+  console.log('  ✓ Spectrogram Inpainting');
   console.log();
   console.log('Note: This is a stub implementation for Phase 2 architecture validation.');
   console.log('Real neural models will be integrated in future updates.');

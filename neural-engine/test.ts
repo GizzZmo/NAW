@@ -14,6 +14,9 @@ import {
   NEURAL_ENGINE_VERSION,
   type DACLatent,
   type SemanticSkeleton,
+  Vocoder,
+  VocoderType,
+  generateMusic,
 } from './index';
 
 // Test counter
@@ -290,6 +293,106 @@ async function runTests() {
       stems.has('DRUMS') && stems.has('BASS') && stems.has('VOCALS') && stems.has('OTHER'),
       'All expected stems present'
     );
+    console.log();
+
+    // Test 6: Vocoder
+    console.log('Test Suite: Vocoder');
+    console.log('-'.repeat(60));
+    
+    const vocoder = new Vocoder({ type: VocoderType.VOCOS });
+    assert(
+      vocoder !== null,
+      'Vocoder can be instantiated'
+    );
+    
+    await vocoder.initialize();
+    assert(
+      vocoder.isInitialized(),
+      'Vocoder initializes without error'
+    );
+    
+    const vocoderConfig = vocoder.getConfig();
+    assert(
+      vocoderConfig.type === VocoderType.VOCOS,
+      'Vocoder type is VOCOS'
+    );
+    assert(
+      vocoderConfig.sampleRate === 44100,
+      'Sample rate is 44.1kHz'
+    );
+    assert(
+      vocoderConfig.channels === 2,
+      'Stereo output'
+    );
+    
+    // Test decoding
+    const testLatent: DACLatent = {
+      codes: pipelineLatents[0].codes,
+      timeSteps: pipelineLatents[0].timeSteps,
+      config: pipelineLatents[0].config,
+    };
+    
+    const vocoderResult = await vocoder.decode(testLatent);
+    assert(
+      vocoderResult.audio.length > 0,
+      'Vocoder decoded audio'
+    );
+    assert(
+      vocoderResult.vocoderType === VocoderType.VOCOS,
+      'Result has correct vocoder type'
+    );
+    assert(
+      vocoderResult.processingTime > 0,
+      'Processing time recorded'
+    );
+    
+    // Test vocoder switching
+    await vocoder.switchVocoder(VocoderType.DISCODER);
+    assert(
+      vocoder.getConfig().type === VocoderType.DISCODER,
+      'Switched to DisCoder'
+    );
+    console.log();
+
+    // Test 7: Full Pipeline with generateMusic
+    console.log('Test Suite: Full Pipeline (generateMusic)');
+    console.log('-'.repeat(60));
+    
+    const generatedStems = await generateMusic({
+      text: 'Energetic techno track',
+      bpm: 140,
+      bars: 4,
+      quality: 'fast',
+    });
+    
+    assert(
+      generatedStems.size === 4,
+      'generateMusic returned 4 stems'
+    );
+    assert(
+      generatedStems.has('DRUMS'),
+      'Has DRUMS stem'
+    );
+    assert(
+      generatedStems.has('BASS'),
+      'Has BASS stem'
+    );
+    assert(
+      generatedStems.has('VOCALS'),
+      'Has VOCALS stem'
+    );
+    assert(
+      generatedStems.has('OTHER'),
+      'Has OTHER stem'
+    );
+    
+    // Check that each stem has audio data
+    for (const [name, audio] of generatedStems.entries()) {
+      assert(
+        audio.length > 0,
+        `${name} stem has audio data`
+      );
+    }
     console.log();
 
   } catch (error) {
