@@ -7,6 +7,9 @@
 > **A Production-Grade AI Music Creation Environment**  
 > Bridging the gap between generative AI and professional music production
 
+[![CI](https://github.com/GizzZmo/NAW/actions/workflows/ci.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/GizzZmo/NAW/actions/workflows/codeql.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/codeql.yml)
+[![Code Quality](https://github.com/GizzZmo/NAW/actions/workflows/code-quality.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.0-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
@@ -225,14 +228,15 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 
 ## 📋 Roadmap
 
-### Phase 1: Foundation (Current - Q1 2025) ✅
+### Phase 1: Foundation (Q1 2025) ✅
 - [x] Core UI and timeline
 - [x] Stem-aware architecture
 - [x] Semantic planner integration
 - [x] Basic playback simulation
 - [x] Project save/load
 
-### Phase 2: Neural Engine (Q2 2025)
+### Phase 2: Neural Engine (Current - Q2 2025) 🚧
+- [x] Architecture design and stubs
 - [ ] Integrate DAC audio codec
 - [ ] Implement Flow Matching renderer
 - [ ] Add ControlNet adapters
