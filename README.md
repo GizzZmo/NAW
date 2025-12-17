@@ -237,8 +237,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 
 ### Phase 2: Neural Engine (Current - Q2 2025) 🚧
 - [x] Architecture design and stubs
-- [ ] Integrate DAC audio codec
-- [ ] Implement Flow Matching renderer
+  - [x] DAC codec architecture with working tests
+  - [x] Semantic planner architecture with working tests
+  - [x] Acoustic renderer architecture with working tests
+  - [x] End-to-end pipeline demonstration
+- [ ] Integrate DAC audio codec (real neural model)
+- [ ] Implement Flow Matching renderer (real neural model)
 - [ ] Add ControlNet adapters
 - [ ] Real audio generation (not simulation)
 
