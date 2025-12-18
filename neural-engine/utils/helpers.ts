@@ -64,9 +64,12 @@ export function getQualityPresetConfig(preset: QualityPreset) {
 export async function createPipeline(preset: QualityPreset = 'draft') {
   const config = getQualityPresetConfig(preset);
 
+  // Map quality model size to planner model size
+  const plannerModelSize = config.modelSize === 'large' ? 'large' : config.modelSize === 'base' ? 'small' : 'medium';
+
   const codec = new DACCodec();
   const planner = new SemanticPlanner({
-    modelSize: config.modelSize === 'large' ? 'large' : 'medium',
+    modelSize: plannerModelSize,
   });
   const renderer = new AcousticRenderer({
     numSteps: config.numSteps,
@@ -180,8 +183,12 @@ export function secondsToSamples(seconds: number, sampleRate: number = 44100): n
 /**
  * Calculate bar duration in samples
  */
-export function barsToSamples(bars: number, bpm: number, sampleRate: number = 44100): number {
-  const beatsPerBar = 4; // Assuming 4/4 time signature
+export function barsToSamples(
+  bars: number,
+  bpm: number,
+  sampleRate: number = 44100,
+  beatsPerBar: number = 4
+): number {
   const beats = bars * beatsPerBar;
   const seconds = (beats / bpm) * 60;
   return secondsToSamples(seconds, sampleRate);
@@ -190,10 +197,14 @@ export function barsToSamples(bars: number, bpm: number, sampleRate: number = 44
 /**
  * Calculate number of bars from sample count
  */
-export function samplesToBars(samples: number, bpm: number, sampleRate: number = 44100): number {
+export function samplesToBars(
+  samples: number,
+  bpm: number,
+  sampleRate: number = 44100,
+  beatsPerBar: number = 4
+): number {
   const seconds = samplesToSeconds(samples, sampleRate);
   const beats = (seconds / 60) * bpm;
-  const beatsPerBar = 4;
   return beats / beatsPerBar;
 }
 
