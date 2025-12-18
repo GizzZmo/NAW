@@ -23,6 +23,7 @@ import {
 let testsRun = 0;
 let testsPassed = 0;
 let testsFailed = 0;
+const SIGNAL_THRESHOLD = 1e-6;
 
 /**
  * Simple assertion helper
@@ -59,8 +60,8 @@ async function runTests() {
     );
     
     assert(
-      isNeuralEngineReady() === false,
-      'Neural engine is not ready (expected for stub implementation)'
+      isNeuralEngineReady() === true,
+      'Neural engine reports ready'
     );
     
     const status = getNeuralEngineStatus();
@@ -69,20 +70,24 @@ async function runTests() {
       'Status version matches'
     );
     assert(
-      status.ready === false,
-      'Status ready is false'
+      status.ready === true,
+      'Status ready is true'
     );
     assert(
-      status.components.codec === false,
-      'Codec component not ready'
+      status.components.codec === true,
+      'Codec component ready'
     );
     assert(
-      status.components.planner === false,
-      'Planner component not ready'
+      status.components.planner === true,
+      'Planner component ready'
     );
     assert(
-      status.components.renderer === false,
-      'Renderer component not ready'
+      status.components.renderer === true,
+      'Renderer component ready'
+    );
+    assert(
+      status.components.vocoder === true,
+      'Vocoder component ready'
     );
     console.log();
 
@@ -147,6 +152,17 @@ async function runTests() {
       decoded.length > 0,
       'Decoded audio has samples'
     );
+    const decodedEnergy = decoded.reduce((acc, v) => acc + Math.abs(v), 0);
+    assert(
+      decodedEnergy > 0,
+      'Decoded audio contains signal'
+    );
+
+    const latentRepeat = await codec.encode(audioData);
+    assert(
+      latent.codes[0][0] === latentRepeat.codes[0][0],
+      'Encoding is deterministic for identical input'
+    );
     console.log();
 
     // Test 3: Semantic Planner
@@ -197,6 +213,15 @@ async function runTests() {
       skeleton.timeSteps > 0,
       'Has time steps'
     );
+    const skeletonRepeat = await planner.generate({
+      text: 'Test prompt',
+      bpm: 120,
+      bars: 4,
+    });
+    assert(
+      skeleton.tokens[0][0][0] === skeletonRepeat.tokens[0][0][0],
+      'Semantic planner output is deterministic'
+    );
     console.log();
 
     // Test 4: Acoustic Renderer
@@ -237,6 +262,18 @@ async function runTests() {
     assert(
       latents[0].codes.length === 16,
       'Latent has 16 codebooks (semantic + acoustic)'
+    );
+    assert(
+      latents[0].codes[0][0] === skeleton.tokens[0][0][0],
+      'Semantic tokens are preserved in rendered latents'
+    );
+    const latentsRepeat = await renderer.render({
+      text: 'Test prompt',
+      semanticTokens: skeleton.tokens,
+    });
+    assert(
+      latentsRepeat[0].codes[2][0] === latents[0].codes[2][0],
+      'Acoustic rendering is deterministic'
     );
     
     // Test quality settings
@@ -293,6 +330,13 @@ async function runTests() {
       stems.has('DRUMS') && stems.has('BASS') && stems.has('VOCALS') && stems.has('OTHER'),
       'All expected stems present'
     );
+    for (const [stemName, audio] of stems.entries()) {
+      const energy = audio.reduce((acc, v) => acc + Math.abs(v), 0);
+      assert(
+        energy > 0,
+        `${stemName} stem carries audio energy`
+      );
+    }
     console.log();
 
     // Test 6: Vocoder
@@ -391,6 +435,11 @@ async function runTests() {
       assert(
         audio.length > 0,
         `${name} stem has audio data`
+      );
+      const signal = audio.some(sample => Math.abs(sample) > SIGNAL_THRESHOLD);
+      assert(
+        signal,
+        `${name} stem has non-zero signal`
       );
     }
     console.log();

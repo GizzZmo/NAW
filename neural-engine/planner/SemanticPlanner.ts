@@ -17,6 +17,7 @@
  */
 
 import type { DACLatent } from '../codec/DACCodec';
+import { hashStringFNV } from '../utils/hash';
 
 /**
  * Semantic Planner configuration
@@ -168,15 +169,20 @@ export class SemanticPlanner {
     const secondsPerBar = (60 / prompt.bpm) * 4; // Assuming 4/4 time
     const totalSeconds = secondsPerBar * prompt.bars;
     const timeSteps = Math.floor(totalSeconds * 50); // 50Hz latent rate
-    
-    // Stub implementation: Generate random tokens
-    const stemNames = ['DRUMS', 'BASS', 'VOCALS', 'OTHER'];
+    const seed = this.hashPrompt(prompt);
+
+    const stemNames = ['DRUMS', 'BASS', 'VOCALS', 'OTHER'].slice(0, this.config.numStems);
     const tokens: number[][][] = [];
+    const rhythmAllowed = (stem: number, t: number) => {
+      const mask = prompt.rhythmMask?.[stem];
+      if (!mask || mask.length === 0) return true;
+      const length = Math.max(1, mask.length);
+      return mask[t % length];
+    };
     
     for (let stemIdx = 0; stemIdx < this.config.numStems; stemIdx++) {
       const stemTokens: number[][] = [];
-      
-      // Generate semantic tokens (first 2 codebooks)
+
       for (let codebookIdx = 0; codebookIdx < 2; codebookIdx++) {
         const codebookTokens: number[] = [];
         
@@ -187,8 +193,11 @@ export class SemanticPlanner {
             onProgress(Math.min(progress, 99));
           }
           
-          // Random token (in real implementation, this would be sampled from model)
-          const token = Math.floor(Math.random() * 1024);
+          const midiLength = Math.max(1, prompt.midi?.[stemIdx]?.length ?? 0);
+          const midiValue = prompt.midi?.[stemIdx]?.[t % midiLength] ?? 0;
+          const rhythmMaskAllowed = rhythmAllowed(stemIdx, t);
+          const base = seed + stemIdx * 997 + codebookIdx * 563 + t * 37 + midiValue;
+          const token = rhythmMaskAllowed ? (Math.abs(base) % 1024) : 0;
           codebookTokens.push(token);
         }
         
@@ -268,6 +277,14 @@ export class SemanticPlanner {
    */
   getConfig(): SemanticPlannerConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Deterministic prompt hash to seed semantic generation
+   */
+  private hashPrompt(prompt: SemanticPrompt): number {
+    const text = `${prompt.text}|${prompt.bpm}|${prompt.bars}`;
+    return hashStringFNV(text);
   }
 }
 

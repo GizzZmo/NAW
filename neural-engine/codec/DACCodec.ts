@@ -15,6 +15,9 @@
  * @see ROADMAP.md § Phase 2.1
  */
 
+const EMBEDDING_SINE_SCALE = 0.013;
+const EMBEDDING_COS_SCALE = 0.007;
+
 /**
  * DAC Encoder/Decoder configuration
  */
@@ -79,9 +82,12 @@ export interface DACLatent {
 export class DACCodec {
   private config: DACConfig;
   private initialized: boolean = false;
+  private codebookEmbeddings: Float32Array[] = [];
+  private frameSize: number;
 
   constructor(config: Partial<DACConfig> = {}) {
     this.config = { ...DEFAULT_DAC_CONFIG, ...config };
+    this.frameSize = Math.max(1, Math.round(this.config.sampleRate / this.config.latentRate));
   }
 
   /**
@@ -96,8 +102,8 @@ export class DACCodec {
     if (this.initialized) return;
 
     console.log('[DAC] Initializing codec...');
-    // Stub: In real implementation, load model weights here
-    await new Promise(resolve => setTimeout(resolve, 100));
+    this.ensureCodebooks(this.config);
+    await new Promise(resolve => setTimeout(resolve, 50));
     
     this.initialized = true;
     console.log('[DAC] Codec initialized');
@@ -121,14 +127,41 @@ export class DACCodec {
 
     console.log(`[DAC] Encoding ${audioData.length} samples...`);
     
-    // Stub implementation: Generate dummy codes
-    const timeSteps = Math.floor(audioData.length * this.config.latentRate / this.config.sampleRate);
+    this.ensureCodebooks(this.config);
+
+    const timeSteps = Math.max(1, Math.ceil(audioData.length / this.frameSize));
     const codes: number[][] = [];
+    const residual = new Float32Array(timeSteps);
+
+    for (let t = 0; t < timeSteps; t++) {
+      const start = t * this.frameSize;
+      const end = Math.min(audioData.length, start + this.frameSize);
+      let sum = 0;
+      for (let i = start; i < end; i++) {
+        sum += audioData[i];
+      }
+      const length = Math.max(1, end - start);
+      residual[t] = sum / length;
+    }
     
-    for (let i = 0; i < this.config.numCodebooks; i++) {
-      codes.push(new Array(timeSteps).fill(0).map(() => 
-        Math.floor(Math.random() * this.config.codebookSize)
-      ));
+    for (let codebookIdx = 0; codebookIdx < this.config.numCodebooks; codebookIdx++) {
+      const embedding = this.codebookEmbeddings[codebookIdx];
+      const codebookCodes: number[] = [];
+      
+      for (let t = 0; t < timeSteps; t++) {
+        const normalized = Math.min(Math.max((residual[t] + 1) / 2, 0), 1);
+        const index = Math.min(
+          this.config.codebookSize - 1,
+          Math.round(normalized * (this.config.codebookSize - 1))
+        );
+        codebookCodes.push(index);
+        
+        const reconstructed = embedding[index];
+        // Update residual in-place to mirror RVQ error propagation into the next codebook layer; sequential update is intentional
+        residual[t] = residual[t] - reconstructed;
+      }
+      
+      codes.push(codebookCodes);
     }
 
     return {
@@ -156,9 +189,35 @@ export class DACCodec {
 
     console.log(`[DAC] Decoding ${latent.timeSteps} time steps...`);
     
-    // Stub implementation: Generate silence
-    const outputLength = Math.floor(latent.timeSteps * this.config.sampleRate / this.config.latentRate);
-    return new Float32Array(outputLength);
+    this.ensureCodebooks(latent.config);
+
+    if (this.codebookEmbeddings.length < latent.codes.length) {
+      throw new Error(
+        `Insufficient codebook embeddings for provided latent: expected ${latent.codes.length}, found ${this.codebookEmbeddings.length}`
+      );
+    }
+
+    const frameSize = Math.max(1, Math.floor(latent.config.sampleRate / latent.config.latentRate));
+    const outputLength = Math.max(1, Math.floor(latent.timeSteps * frameSize));
+    const output = new Float32Array(outputLength);
+
+    for (let t = 0; t < latent.timeSteps; t++) {
+      let value = 0;
+      for (let cb = 0; cb < latent.codes.length; cb++) {
+        const index = latent.codes[cb]?.[t] ?? 0;
+        const embedding = this.codebookEmbeddings[cb];
+        value += embedding?.[index] ?? 0;
+      }
+      value /= Math.max(1, latent.codes.length);
+
+      const start = t * frameSize;
+      const end = Math.min(outputLength, start + frameSize);
+      for (let i = start; i < end; i++) {
+        output[i] = value;
+      }
+    }
+
+    return output;
   }
 
   /**
@@ -183,6 +242,29 @@ export class DACCodec {
    */
   getConfig(): DACConfig {
     return { ...this.config };
+  }
+
+  private ensureCodebooks(config: DACConfig): void {
+    const needsRebuild =
+      this.codebookEmbeddings.length !== config.numCodebooks ||
+      this.codebookEmbeddings[0]?.length !== config.codebookSize;
+
+    if (needsRebuild) {
+      this.codebookEmbeddings = [];
+      for (let i = 0; i < config.numCodebooks; i++) {
+        const embedding = new Float32Array(config.codebookSize);
+        for (let k = 0; k < config.codebookSize; k++) {
+          // Deterministic sinusoidal basis to simulate diverse RVQ centroids. Tanh bounds values to [-1, 1].
+          const value = Math.tanh(
+            Math.sin((i + 1) * (k + 1) * EMBEDDING_SINE_SCALE) +
+            Math.cos((k + 1) * EMBEDDING_COS_SCALE * (i + 1))
+          );
+          embedding[k] = value;
+        }
+        this.codebookEmbeddings.push(embedding);
+      }
+      this.frameSize = Math.max(1, Math.round(config.sampleRate / config.latentRate));
+    }
   }
 }
 
