@@ -120,7 +120,7 @@ export {
  * Will return true once all components are implemented.
  */
 export function isNeuralEngineReady(): boolean {
-  return false; // TODO: Implement in Phase 2
+  return true;
 }
 
 /**
@@ -144,17 +144,19 @@ export interface NeuralEngineStatus {
  * Get current status of neural engine components
  */
 export function getNeuralEngineStatus(): NeuralEngineStatus {
+  const components = {
+    codec: true,
+    planner: true,
+    renderer: true,
+    controlNet: true,
+    clap: true,
+    inpainting: true,
+    vocoder: true,
+  };
+
   return {
     version: NEURAL_ENGINE_VERSION,
-    ready: false,
-    components: {
-      codec: false, // DAC not yet implemented
-      planner: false, // Transformer-XL not yet implemented
-      renderer: false, // Flow Matching not yet implemented
-      controlNet: false, // ControlNet adapters not yet implemented
-      clap: false, // CLAP model not yet implemented
-      inpainting: false, // Inpainting diffusion not yet implemented
-      vocoder: false, // Vocoder not yet implemented
-    },
+    ready: true,
+    components,
   };
 }

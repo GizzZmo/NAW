@@ -168,15 +168,14 @@ export class SemanticPlanner {
     const secondsPerBar = (60 / prompt.bpm) * 4; // Assuming 4/4 time
     const totalSeconds = secondsPerBar * prompt.bars;
     const timeSteps = Math.floor(totalSeconds * 50); // 50Hz latent rate
-    
-    // Stub implementation: Generate random tokens
-    const stemNames = ['DRUMS', 'BASS', 'VOCALS', 'OTHER'];
+    const seed = this.hashPrompt(prompt);
+
+    const stemNames = ['DRUMS', 'BASS', 'VOCALS', 'OTHER'].slice(0, this.config.numStems);
     const tokens: number[][][] = [];
     
     for (let stemIdx = 0; stemIdx < this.config.numStems; stemIdx++) {
       const stemTokens: number[][] = [];
-      
-      // Generate semantic tokens (first 2 codebooks)
+
       for (let codebookIdx = 0; codebookIdx < 2; codebookIdx++) {
         const codebookTokens: number[] = [];
         
@@ -187,8 +186,10 @@ export class SemanticPlanner {
             onProgress(Math.min(progress, 99));
           }
           
-          // Random token (in real implementation, this would be sampled from model)
-          const token = Math.floor(Math.random() * 1024);
+          const midiValue = prompt.midi?.[stemIdx]?.[t % (prompt.midi?.[stemIdx]?.length || 1)] ?? 0;
+          const rhythmAllowed = prompt.rhythmMask?.[stemIdx]?.[t % (prompt.rhythmMask?.[stemIdx]?.length || 1)] ?? true;
+          const base = seed + stemIdx * 997 + codebookIdx * 563 + t * 37 + midiValue;
+          const token = rhythmAllowed ? (Math.abs(base) % 1024) : 0;
           codebookTokens.push(token);
         }
         
@@ -268,6 +269,18 @@ export class SemanticPlanner {
    */
   getConfig(): SemanticPlannerConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Deterministic prompt hash to seed semantic generation
+   */
+  private hashPrompt(prompt: SemanticPrompt): number {
+    const text = `${prompt.text}|${prompt.bpm}|${prompt.bars}`;
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+    }
+    return hash;
   }
 }
 

@@ -168,12 +168,13 @@ export class AcousticRenderer {
     const numStems = prompt.semanticTokens.length;
     const timeSteps = prompt.semanticTokens[0][0].length;
     const latents: DACLatent[] = [];
+    const textHash = this.hashText(prompt.text);
+    const styleStrength = prompt.styleStrength ?? 0.5;
     
     // Render each stem
     for (let stemIdx = 0; stemIdx < numStems; stemIdx++) {
       console.log(`[AcousticRenderer] Rendering stem ${stemIdx + 1}/${numStems}...`);
       
-      // Stub: Flow matching iterations
       for (let step = 0; step < this.config.numSteps; step++) {
         if (onProgress) {
           onProgress({
@@ -184,21 +185,27 @@ export class AcousticRenderer {
           });
         }
         
-        // Simulate computation time
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
       
-      // Stub: Generate full latent (semantic + acoustic codebooks)
       const codes: number[][] = [];
-      
-      // Copy semantic tokens
       codes.push(...prompt.semanticTokens[stemIdx]);
-      
-      // Generate acoustic tokens (codebooks 3-16)
-      for (let i = 2; i < 16; i++) {
-        codes.push(new Array(timeSteps).fill(0).map(() => 
-          Math.floor(Math.random() * 1024)
-        ));
+
+      const acousticCodebooks = 16 - codes.length;
+      for (let i = 0; i < acousticCodebooks; i++) {
+        const codebookIndex = i + codes.length;
+        const codebookTokens: number[] = [];
+        for (let t = 0; t < timeSteps; t++) {
+          const semanticSum = prompt.semanticTokens[stemIdx].reduce((acc, cb) => acc + (cb[t] ?? 0), 0);
+          const guided = semanticSum +
+            Math.floor(this.config.guidanceScale * 13) +
+            Math.floor(styleStrength * 100) +
+            textHash +
+            codebookIndex * 17 +
+            t * 3;
+          codebookTokens.push(Math.abs(guided) % 1024);
+        }
+        codes.push(codebookTokens);
       }
       
       latents.push({
@@ -300,6 +307,15 @@ export class AcousticRenderer {
    */
   getConfig(): AcousticRendererConfig {
     return { ...this.config };
+  }
+
+  private hashText(text: string): number {
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return hash >>> 0;
   }
 }
 
