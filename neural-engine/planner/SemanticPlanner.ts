@@ -17,6 +17,7 @@
  */
 
 import type { DACLatent } from '../codec/DACCodec';
+import { hashStringFNV } from '../utils/hash';
 
 /**
  * Semantic Planner configuration
@@ -172,6 +173,12 @@ export class SemanticPlanner {
 
     const stemNames = ['DRUMS', 'BASS', 'VOCALS', 'OTHER'].slice(0, this.config.numStems);
     const tokens: number[][][] = [];
+    const rhythmAllowed = (stem: number, t: number) => {
+      const mask = prompt.rhythmMask?.[stem];
+      if (!mask || mask.length === 0) return true;
+      const length = Math.max(1, mask.length);
+      return mask[t % length];
+    };
     
     for (let stemIdx = 0; stemIdx < this.config.numStems; stemIdx++) {
       const stemTokens: number[][] = [];
@@ -186,10 +193,11 @@ export class SemanticPlanner {
             onProgress(Math.min(progress, 99));
           }
           
-          const midiValue = prompt.midi?.[stemIdx]?.[t % (prompt.midi?.[stemIdx]?.length || 1)] ?? 0;
-          const rhythmAllowed = prompt.rhythmMask?.[stemIdx]?.[t % (prompt.rhythmMask?.[stemIdx]?.length || 1)] ?? true;
+          const midiLength = Math.max(1, prompt.midi?.[stemIdx]?.length ?? 0);
+          const midiValue = prompt.midi?.[stemIdx]?.[t % midiLength] ?? 0;
+          const rhythmMaskAllowed = rhythmAllowed(stemIdx, t);
           const base = seed + stemIdx * 997 + codebookIdx * 563 + t * 37 + midiValue;
-          const token = rhythmAllowed ? (Math.abs(base) % 1024) : 0;
+          const token = rhythmMaskAllowed ? (Math.abs(base) % 1024) : 0;
           codebookTokens.push(token);
         }
         
@@ -276,11 +284,7 @@ export class SemanticPlanner {
    */
   private hashPrompt(prompt: SemanticPrompt): number {
     const text = `${prompt.text}|${prompt.bpm}|${prompt.bars}`;
-    let hash = 0;
-    for (let i = 0; i < text.length; i++) {
-      hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-    }
-    return hash;
+    return hashStringFNV(text);
   }
 }
 

@@ -15,6 +15,9 @@
  * @see ROADMAP.md § Phase 2.1
  */
 
+const EMBEDDING_SINE_SCALE = 0.013;
+const EMBEDDING_COS_SCALE = 0.007;
+
 /**
  * DAC Encoder/Decoder configuration
  */
@@ -154,7 +157,8 @@ export class DACCodec {
         codebookCodes.push(index);
         
         const reconstructed = embedding[index];
-        residual[t] = residual[t] - reconstructed / (codebookIdx + 1);
+        // Update residual in-place to mirror RVQ error propagation into the next codebook layer; sequential update is intentional
+        residual[t] = residual[t] - reconstructed;
       }
       
       codes.push(codebookCodes);
@@ -187,6 +191,12 @@ export class DACCodec {
     
     this.ensureCodebooks(latent.config);
 
+    if (this.codebookEmbeddings.length < latent.codes.length) {
+      throw new Error(
+        `Insufficient codebook embeddings for provided latent: expected ${latent.codes.length}, found ${this.codebookEmbeddings.length}`
+      );
+    }
+
     const frameSize = Math.max(1, Math.floor(latent.config.sampleRate / latent.config.latentRate));
     const outputLength = Math.max(1, Math.floor(latent.timeSteps * frameSize));
     const output = new Float32Array(outputLength);
@@ -195,7 +205,7 @@ export class DACCodec {
       let value = 0;
       for (let cb = 0; cb < latent.codes.length; cb++) {
         const index = latent.codes[cb]?.[t] ?? 0;
-        const embedding = this.codebookEmbeddings[cb % this.codebookEmbeddings.length];
+        const embedding = this.codebookEmbeddings[cb];
         value += embedding?.[index] ?? 0;
       }
       value /= Math.max(1, latent.codes.length);
@@ -244,9 +254,10 @@ export class DACCodec {
       for (let i = 0; i < config.numCodebooks; i++) {
         const embedding = new Float32Array(config.codebookSize);
         for (let k = 0; k < config.codebookSize; k++) {
+          // Deterministic sinusoidal basis to simulate diverse RVQ centroids. Tanh bounds values to [-1, 1].
           const value = Math.tanh(
-            Math.sin((i + 1) * (k + 1) * 0.013) +
-            Math.cos((k + 1) * 0.007 * (i + 1))
+            Math.sin((i + 1) * (k + 1) * EMBEDDING_SINE_SCALE) +
+            Math.cos((k + 1) * EMBEDDING_COS_SCALE * (i + 1))
           );
           embedding[k] = value;
         }

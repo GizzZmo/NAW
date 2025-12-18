@@ -23,6 +23,7 @@ import {
 let testsRun = 0;
 let testsPassed = 0;
 let testsFailed = 0;
+const SIGNAL_THRESHOLD = 1e-6;
 
 /**
  * Simple assertion helper
@@ -435,7 +436,7 @@ async function runTests() {
         audio.length > 0,
         `${name} stem has audio data`
       );
-      const signal = audio.some(sample => sample !== 0);
+      const signal = audio.some(sample => Math.abs(sample) > SIGNAL_THRESHOLD);
       assert(
         signal,
         `${name} stem has non-zero signal`

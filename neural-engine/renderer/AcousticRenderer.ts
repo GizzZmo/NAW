@@ -17,6 +17,7 @@
  */
 
 import type { DACLatent } from '../codec/DACCodec';
+import { hashStringFNV } from '../utils/hash';
 
 /**
  * Acoustic Renderer configuration
@@ -82,6 +83,11 @@ export interface RenderProgress {
   /** Total number of stems */
   totalStems: number;
 }
+
+const GUIDANCE_WEIGHT = 13;
+const STYLE_WEIGHT = 100;
+const CODEBOOK_STRIDE = 17;
+const TIME_STEP_STRIDE = 3;
 
 /**
  * Acoustic Renderer for high-fidelity audio generation
@@ -168,12 +174,15 @@ export class AcousticRenderer {
     const numStems = prompt.semanticTokens.length;
     const timeSteps = prompt.semanticTokens[0][0].length;
     const latents: DACLatent[] = [];
-    const textHash = this.hashText(prompt.text);
+    const textHash = hashStringFNV(prompt.text);
     const styleStrength = prompt.styleStrength ?? 0.5;
     
     // Render each stem
     for (let stemIdx = 0; stemIdx < numStems; stemIdx++) {
       console.log(`[AcousticRenderer] Rendering stem ${stemIdx + 1}/${numStems}...`);
+      const semanticSums = Array.from({ length: timeSteps }, (_, t) =>
+        prompt.semanticTokens[stemIdx].reduce((acc, cb) => acc + (cb?.[t] ?? 0), 0)
+      );
       
       for (let step = 0; step < this.config.numSteps; step++) {
         if (onProgress) {
@@ -196,13 +205,13 @@ export class AcousticRenderer {
         const codebookIndex = i + codes.length;
         const codebookTokens: number[] = [];
         for (let t = 0; t < timeSteps; t++) {
-          const semanticSum = prompt.semanticTokens[stemIdx].reduce((acc, cb) => acc + (cb[t] ?? 0), 0);
+          const semanticSum = semanticSums[t];
           const guided = semanticSum +
-            Math.floor(this.config.guidanceScale * 13) +
-            Math.floor(styleStrength * 100) +
+            Math.floor(this.config.guidanceScale * GUIDANCE_WEIGHT) +
+            Math.floor(styleStrength * STYLE_WEIGHT) +
             textHash +
-            codebookIndex * 17 +
-            t * 3;
+            codebookIndex * CODEBOOK_STRIDE +
+            t * TIME_STEP_STRIDE;
           codebookTokens.push(Math.abs(guided) % 1024);
         }
         codes.push(codebookTokens);
@@ -307,15 +316,6 @@ export class AcousticRenderer {
    */
   getConfig(): AcousticRendererConfig {
     return { ...this.config };
-  }
-
-  private hashText(text: string): number {
-    let hash = 2166136261;
-    for (let i = 0; i < text.length; i++) {
-      hash ^= text.charCodeAt(i);
-      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
-    }
-    return hash >>> 0;
   }
 }
 

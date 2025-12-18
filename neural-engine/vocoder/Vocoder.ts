@@ -156,15 +156,25 @@ export class Vocoder {
     // 4. Apply any post-processing (normalization, limiting)
     
     const audio = new Float32Array(totalSamples);
-    for (let i = 0; i < totalSamples; i++) {
-      const step = Math.floor((i / this.config.channels) * latent.config.latentRate / this.config.sampleRate);
+    const frameStepIncrement = latent.config.latentRate / this.config.sampleRate;
+    const totalFrames = Math.floor(totalSamples / this.config.channels);
+    const maxCodebookValue = Math.max(1, latent.config.codebookSize - 1);
+    const normalizationDivisor = Math.max(1, latent.codes.length * maxCodebookValue);
+
+    for (let frame = 0; frame < totalFrames; frame++) {
+      const step = Math.floor(frame * frameStepIncrement);
       let codeSum = 0;
       for (let cb = 0; cb < latent.codes.length; cb++) {
-        const code = latent.codes[cb]?.[step % latent.codes[cb].length] ?? 0;
-        codeSum += code;
+        const codebook = latent.codes[cb];
+        if (!codebook || codebook.length === 0) continue;
+        const clampedStep = Math.min(codebook.length - 1, Math.max(0, step));
+        codeSum += codebook[clampedStep];
       }
-      const normalized = (codeSum / (latent.codes.length * latent.config.codebookSize)) * 2 - 1;
-      audio[i] = normalized;
+      const normalized = (codeSum / normalizationDivisor) * 2 - 1;
+
+      for (let ch = 0; ch < this.config.channels; ch++) {
+        audio[frame * this.config.channels + ch] = normalized;
+      }
     }
 
     // Simulate some processing time based on vocoder type
