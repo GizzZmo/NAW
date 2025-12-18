@@ -92,6 +92,27 @@ export {
  */
 export const NEURAL_ENGINE_VERSION = '0.2.0-alpha';
 
+// Utility exports
+export {
+  type QualityPreset,
+  getQualityPresetConfig,
+  createPipeline,
+  estimateGenerationTime,
+  formatTime,
+  samplesToSeconds,
+  secondsToSamples,
+  barsToSamples,
+  samplesToBars,
+  normalizeAudio,
+  applyFades,
+  mixAudio,
+  calculateRMS,
+  calculatePeakDB,
+  ProgressTracker,
+  retry,
+  type TimeEstimate,
+} from './utils/helpers';
+
 /**
  * Check if neural engine is ready for use
  * 
