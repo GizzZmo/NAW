@@ -7,7 +7,6 @@
 
 import {
   ControlNet,
-  ControlType,
   AcousticRenderer,
   Vocoder,
   loadStyleAdapter,
@@ -35,28 +34,21 @@ async function controlNetExample() {
   // Extract different control signals
   console.log('Extracting control signals...');
   
-  const melodySignal = await controlNet.extractControlSignal(
-    referenceAudio,
-    ControlType.MELODY
-  );
+  const melodySignal = await controlNet.extractControlSignal(referenceAudio);
   console.log(`  Melody: ${melodySignal.data.length} control points`);
 
-  const rhythmSignal = await controlNet.extractControlSignal(
-    referenceAudio,
-    ControlType.RHYTHM
-  );
+  const rhythmSignal = await controlNet.extractControlSignal(referenceAudio);
   console.log(`  Rhythm: ${rhythmSignal.data.length} control points`);
 
-  const dynamicsSignal = await controlNet.extractControlSignal(
-    referenceAudio,
-    ControlType.DYNAMICS
-  );
+  const dynamicsSignal = await controlNet.extractControlSignal(referenceAudio);
   console.log(`  Dynamics: ${dynamicsSignal.data.length} control points\n`);
 
   // Load style adapter
   console.log('Loading style adapter...');
   const jazzAdapter = await loadStyleAdapter('jazz');
-  console.log(`Loaded adapter: ${jazzAdapter.name} (${jazzAdapter.size} params)\n`);
+  if (jazzAdapter) {
+    console.log(`Loaded adapter: ${jazzAdapter.name} (rank ${jazzAdapter.rank})\n`);
+  }
 
   // Generate with multiple controls
   console.log('Generating with control signals...');
@@ -69,8 +61,7 @@ async function controlNetExample() {
   // Apply melody control
   const controlledLatent = await controlNet.applyControl(
     dummyLatent,
-    melodySignal,
-    0.8 // 80% control strength
+    melodySignal
   );
 
   console.log('Control applied successfully!\n');

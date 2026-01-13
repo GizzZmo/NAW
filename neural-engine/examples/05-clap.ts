@@ -11,10 +11,7 @@ async function clapExample() {
   console.log('=== CLAP Audio Conditioning Example ===\n');
 
   // Initialize CLAP
-  const clap = new CLAP({
-    modelSize: 'large',
-    embeddingDim: 512,
-  });
+  const clap = new CLAP();
 
   console.log('Initializing CLAP...');
   await clap.initialize();
@@ -27,7 +24,7 @@ async function clapExample() {
   console.log('Example 1: Encoding audio reference...');
   const audioEmbed = await clap.encodeAudio(referenceAudio);
   console.log(`  Audio embedding: ${audioEmbed.embedding.length} dimensions`);
-  console.log(`  Confidence: ${audioEmbed.confidence.toFixed(2)}\n`);
+  console.log(`  Duration: ${audioEmbed.duration.toFixed(2)}s\n`);
 
   // Example 2: Encode text
   console.log('Example 2: Encoding text prompts...');
@@ -102,7 +99,7 @@ async function clapExample() {
     // audioReferenceWeight: 0.6,
   });
 
-  console.log(`  Generated ${stems.length} stems\n`);
+  console.log(`  Generated ${stems.size} stems\n`);
 
   console.log('✓ Example complete!');
   console.log('CLAP use cases:');
