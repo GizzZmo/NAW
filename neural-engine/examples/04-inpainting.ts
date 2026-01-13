@@ -18,8 +18,6 @@ async function inpaintingExample() {
   // Initialize inpainter
   const inpainter = new SpectrogramInpainter({
     method: InpaintingMethod.DISCRETE_DIFFUSION,
-    blendingMethod: 'smooth',
-    fadeLength: 0.1, // 100ms fade
   });
 
   console.log('Initializing inpainter...');
@@ -41,14 +39,15 @@ async function inpaintingExample() {
     endTime: 2.1,       // End at 2.1 seconds (100ms)
     freqMin: 200,       // 200 Hz
     freqMax: 8000,      // 8000 Hz (snare frequency range)
+    strength: 1.0,
   };
 
   const startTime1 = Date.now();
   const result1 = await inpainter.inpaint(audio, snareMask);
   const time1 = (Date.now() - startTime1) / 1000;
 
-  console.log(`  Inpainted ${result1.inpaintedSamples} samples in ${formatTime(time1)}`);
-  console.log(`  Quality score: ${result1.quality?.toFixed(2)}\n`);
+  console.log(`  Inpainted audio length: ${result1.audio.length} samples`);
+  console.log(`  Processing time: ${formatTime(time1)}\n`);
 
   // Example 2: Regenerate entire section
   console.log('Example 2: Regenerating section...');
@@ -58,22 +57,23 @@ async function inpaintingExample() {
     endTime: 7.0,       // End at 7 seconds (2 second gap)
     freqMin: 0,         // Full frequency range
     freqMax: 22050,     // Nyquist frequency
+    strength: 1.0,
   };
 
   const startTime2 = Date.now();
   const result2 = await inpainter.inpaint(audio, sectionMask);
   const time2 = (Date.now() - startTime2) / 1000;
 
-  console.log(`  Inpainted ${result2.inpaintedSamples} samples in ${formatTime(time2)}`);
-  console.log(`  Quality score: ${result2.quality?.toFixed(2)}\n`);
+  console.log(`  Inpainted audio length: ${result2.audio.length} samples`);
+  console.log(`  Processing time: ${formatTime(time2)}\n`);
 
   // Example 3: Batch inpainting (multiple regions)
   console.log('Example 3: Batch inpainting (remove multiple elements)...');
   
   const batchMasks: InpaintingMask[] = [
-    { startTime: 1.0, endTime: 1.1, freqMin: 200, freqMax: 8000 },   // Snare 1
-    { startTime: 3.0, endTime: 3.1, freqMin: 200, freqMax: 8000 },   // Snare 2
-    { startTime: 5.0, endTime: 5.1, freqMin: 200, freqMax: 8000 },   // Snare 3
+    { startTime: 1.0, endTime: 1.1, freqMin: 200, freqMax: 8000, strength: 1.0 },   // Snare 1
+    { startTime: 3.0, endTime: 3.1, freqMin: 200, freqMax: 8000, strength: 1.0 },   // Snare 2
+    { startTime: 5.0, endTime: 5.1, freqMin: 200, freqMax: 8000, strength: 1.0 },   // Snare 3
   ];
 
   const startTime3 = Date.now();
@@ -81,7 +81,7 @@ async function inpaintingExample() {
   const time3 = (Date.now() - startTime3) / 1000;
 
   console.log(`  Batch inpainted ${batchMasks.length} regions in ${formatTime(time3)}`);
-  console.log(`  Total samples inpainted: ${result3.inpaintedSamples}\n`);
+  console.log(`  Resulting audio length: ${result3.audio.length} samples\n`);
 
   // Example 4: Outpainting for loop generation
   console.log('Example 4: Extending audio (outpainting)...');

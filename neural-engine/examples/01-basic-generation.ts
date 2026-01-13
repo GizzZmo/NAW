@@ -32,13 +32,12 @@ async function basicGeneration() {
 
   const actualTime = (Date.now() - startTime) / 1000;
   console.log(`\nGeneration complete in ${formatTime(actualTime)}`);
-  console.log(`Generated ${stems.length} stems`);
+  console.log(`Generated ${stems.size} stems`);
   
   // In a real implementation, you would save or play the stems here
   console.log('\nStems:');
-  stems.forEach((stem, i) => {
-    const stemNames = ['DRUMS', 'BASS', 'VOCALS', 'OTHER'];
-    console.log(`  ${stemNames[i]}: ${stem.length} samples`);
+  stems.forEach((stem, name) => {
+    console.log(`  ${name}: ${stem.length} samples`);
   });
 }
 

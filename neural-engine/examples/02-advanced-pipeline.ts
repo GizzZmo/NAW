@@ -24,13 +24,13 @@ async function advancedPipeline() {
   });
 
   const planner = new SemanticPlanner({
-    modelSize: 'large',
+    modelSize: '500M',
     temperature: 0.8,
     topK: 50,
   });
 
   const renderer = new AcousticRenderer({
-    qualityPreset: 'high',
+    modelSize: '1B',
     numSteps: 25,
     guidanceScale: 3.5,
   });
@@ -84,7 +84,10 @@ async function advancedPipeline() {
       text: "Dark techno track with driving bass",
       semanticTokens: skeleton.tokens,
     },
-    (progress) => tracker.update('rendering', progress.percentage)
+    (progress) => tracker.update(
+      'rendering',
+      (progress.step / progress.totalSteps) * 100
+    )
   );
 
   console.log(`Rendering complete in ${formatTime((Date.now() - renderingStart) / 1000)}`);
