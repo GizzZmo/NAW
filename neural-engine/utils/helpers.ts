@@ -65,7 +65,12 @@ export async function createPipeline(preset: QualityPreset = 'draft') {
   const config = getQualityPresetConfig(preset);
 
   // Map quality model size to planner model size
-  const plannerModelSize = config.modelSize === '500M' ? '500M' : '1B';
+  const plannerModelSizeMap = {
+    '500M': '500M',
+    '1B': '1B',
+    '2B': '1B',
+  } as const;
+  const plannerModelSize = plannerModelSizeMap[config.modelSize];
 
   const codec = new DACCodec();
   const planner = new SemanticPlanner({
