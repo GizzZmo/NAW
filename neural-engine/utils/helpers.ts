@@ -26,28 +26,28 @@ export type QualityPreset = 'preview' | 'draft' | 'production' | 'master';
 export function getQualityPresetConfig(preset: QualityPreset) {
   const configs = {
     preview: {
-      vocoderType: VocoderType.VOCOS,
+      vocoder: VocoderType.VOCOS,
       numSteps: 10,
       guidanceScale: 2.0,
       modelSize: '500M' as const,
       description: 'Fast iteration (5x realtime, good quality)',
     },
     draft: {
-      vocoderType: VocoderType.VOCOS,
+      vocoder: VocoderType.VOCOS,
       numSteps: 15,
       guidanceScale: 2.5,
       modelSize: '500M' as const,
       description: 'Balanced preview (3x realtime, better quality)',
     },
     production: {
-      vocoderType: VocoderType.DISCODER,
+      vocoder: VocoderType.DISCODER,
       numSteps: 20,
       guidanceScale: 3.0,
       modelSize: '1B' as const,
       description: 'High quality (1x realtime, excellent quality)',
     },
     master: {
-      vocoderType: VocoderType.DISCODER,
+      vocoder: VocoderType.DISCODER,
       numSteps: 30,
       guidanceScale: 3.5,
       modelSize: '2B' as const,
@@ -80,10 +80,10 @@ export async function createPipeline(preset: QualityPreset = 'draft') {
     numSteps: config.numSteps,
     guidanceScale: config.guidanceScale,
     modelSize: config.modelSize,
-    vocoderType: config.vocoderType,
+    vocoder: config.vocoder,
   });
   const vocoder = new Vocoder({
-    type: config.vocoderType,
+    type: config.vocoder,
   });
 
   // Initialize all components in parallel
