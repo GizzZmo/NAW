@@ -170,7 +170,7 @@ Transform the Neural Audio Workstation from a research prototype into a producti
 
 ## Phase 3: Advanced Control & Editing (Q3 2025)
 
-**Status**: Planned  
+**Status**: UI Controls Complete ✅  
 **Goal**: Enable surgical editing, multi-modal conditioning, and professional workflows
 
 ### 3.1 ControlNet & Adapters (July 2025)
@@ -201,15 +201,16 @@ Transform the Neural Audio Workstation from a research prototype into a producti
   - Embedding blending system
   - Stub implementation with correct APIs
 
-- [ ] **CLAP Audio Conditioning Implementation**
-  - Integrate LAION CLAP model
-  - "Style Slot": Drag audio file to condition generation
-  - Extract and blend audio + text embeddings
+- [x] **CLAP Audio Reference UI** *(v1.2)*
+  - Drag-and-drop audio file slot in sidebar
+  - Visual indicator of loaded reference file
+  - Blending strength controlled by Style Strength slider
 
-- [ ] **UI Controls**
-  - Style strength slider (0-100%)
-  - Temperature slider for randomness
-  - Adapter selector dropdown
+- [x] **UI Controls** *(v1.2)*
+  - Style strength slider (0-100%) with live value display
+  - Temperature slider (0.00-1.00) with live value display
+  - Style adapter selector dropdown (None, Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop)
+  - Active adapter shown in status bar
 
 **Deliverable**: Generate "a jazz bassline like this reference track at 128 BPM"
 
@@ -233,10 +234,11 @@ Transform the Neural Audio Workstation from a research prototype into a producti
   - Use as guidance for long-gap inpainting (>2 seconds)
   - Ensure motif consistency
 
-- [ ] **Interactive UI**
+- [x] **Interactive UI** *(v1.2)*
   - Brush tool on spectrogram (already UI-ready)
-  - Select region → Right-click → "Inpaint"
-  - Real-time preview of inpainted region
+  - Right-click → "Inpaint Region" context menu on clips
+  - Right-click → "Regenerate Clip" for full clip re-render
+  - Right-click → "Delete Clip" for clip removal
 
 - [x] **Outpainting Architecture**
   - Loop generation system design
@@ -266,10 +268,13 @@ Transform the Neural Audio Workstation from a research prototype into a producti
   - Import MP3/WAV → Auto-separate to 4 stems
   - Place stems on timeline as clips
 
-- [ ] **Export Formats Implementation**
-  - Individual stem export: DRUMS.wav, BASS.wav, etc.
-  - Stereo mixdown export
-  - Project export with stems (Ableton/Logic compatible folder structure)
+- [x] **Export UI** *(v1.2)*
+  - Export modal with format selection (WAV Stems, Mixdown, Ableton, Logic, Pro Tools)
+  - Sample rate selector (44.1k, 48k, 88.2k, 96k)
+  - Bit depth selector (16-bit, 24-bit, 32-bit)
+  - Normalize and dithering toggles
+  - Simulated export progress bar
+  - JSON manifest download for WAV Stems export
 
 - [ ] **Stem Replacement Workflow**
   - Import song → Separate stems
@@ -488,9 +493,19 @@ This roadmap is a living document. Contributions are welcome!
   - VST/AU plugin architecture (JUCE)
   - TensorRT optimization configuration
   - Commercial licensing structure
+- **2026-03-04**: Phase 3 & 4 UI implementation (v1.2):
+  - Style adapter selector dropdown (Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop)
+  - Functional style strength and temperature sliders with live value display
+  - CLAP audio reference drag-and-drop slot
+  - Export modal (WAV Stems / Mixdown / Ableton / Logic / Pro Tools)
+  - Configurable sample rate (44.1k–96k) and bit depth (16/24/32-bit)
+  - Right-click context menu on clips (Inpaint / Regenerate / Delete)
+  - Click-to-edit BPM field
+  - Proper Vite + Tailwind v4 build pipeline (fully bundled, no CDN dependency)
+  - Status bar shows active adapter and CLAP reference file
 
 ---
 
-**Last Updated**: December 17, 2025  
+**Last Updated**: March 4, 2026  
 **Maintainer**: @GizzZmo  
-**Status**: Phase 1 Complete ✅ | Phase 2 Architecture Complete ✅ | Phase 3 & 4 Architectures Complete ✅ | Implementation In Progress 🚧
+**Status**: Phase 1 Complete ✅ | Phase 2 Architecture Complete ✅ | Phase 3 & 4 Architectures Complete ✅ | Phase 3 UI Complete ✅ | Implementation In Progress 🚧
