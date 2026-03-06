@@ -12,6 +12,7 @@ import { SpectrogramEditor } from './components/SpectrogramEditor';
 import { PianoRoll } from './components/PianoRoll';
 import { PromptLane } from './components/PromptLane';
 import { ExportModal } from './components/ExportModal';
+import { AboutModal } from './components/AboutModal';
 import { 
   Play, Pause, Square, Mic, Wand2, Layers, Sliders, Info, MoreHorizontal, 
   Piano, Activity, Brush, Eye, Cpu, Save, Upload, Folder, Download, FileJson, Check,
@@ -63,6 +64,9 @@ const App: React.FC = () => {
 
   // Phase 3.3: Export modal
   const [showExportModal, setShowExportModal] = useState(false);
+
+  // About modal
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   // BPM editing
   const [isEditingBpm, setIsEditingBpm] = useState(false);
@@ -357,6 +361,10 @@ const App: React.FC = () => {
         />
       )}
 
+      {showAboutModal && (
+        <AboutModal onClose={() => setShowAboutModal(false)} />
+      )}
+
       {/* Context Menu (right-click on clips) */}
       {contextMenu.visible && (
         <div
@@ -547,8 +555,12 @@ const App: React.FC = () => {
              </button>
           </div>
           
-          <button className="p-2 hover:bg-slate-800 rounded-full">
-            <MoreHorizontal size={20} className="text-slate-400" />
+          <button
+            onClick={() => setShowAboutModal(true)}
+            className="p-2 hover:bg-slate-800 rounded-full"
+            title="About NAW"
+          >
+            <Info size={20} className="text-slate-400 hover:text-white transition" />
           </button>
         </div>
       </header>
