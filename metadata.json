@@ -1,6 +1,27 @@
 {
   "name": "Neural Audio Workstation (NAW)",
   "description": "A production-grade AI music creation environment featuring hybrid AR/Diffusion architecture simulation, stem-aware mixing, and spectral inpainting.",
+  "homepage": "https://github.com/GizzZmo/NAW",
+  "topics": [
+    "audio",
+    "music-production",
+    "ai-music",
+    "daw",
+    "neural-audio",
+    "stem-separation",
+    "generative-ai",
+    "diffusion-model",
+    "typescript",
+    "react",
+    "web-audio-api",
+    "music-generation",
+    "inpainting",
+    "controlnet",
+    "vst-plugin"
+  ],
+  "version": "1.2.0",
+  "license": "MIT",
+  "commercialLicense": "docs/COMMERCIAL_LICENSE.md",
   "requestFramePermissions": [
     "microphone"
   ]
