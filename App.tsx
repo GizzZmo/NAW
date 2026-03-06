@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     ProjectState, Track, Clip, StemType, SpectrogramTool, NoteEvent, EditViewMode 
 } from './types';
@@ -11,10 +11,16 @@ import { MixerChannel } from './components/MixerChannel';
 import { SpectrogramEditor } from './components/SpectrogramEditor';
 import { PianoRoll } from './components/PianoRoll';
 import { PromptLane } from './components/PromptLane';
+import { ExportModal } from './components/ExportModal';
 import { 
   Play, Pause, Square, Mic, Wand2, Layers, Sliders, Info, MoreHorizontal, 
-  Piano, Activity, Brush, Eye, Cpu, Save, Upload, Folder, Download, FileJson, Check
+  Piano, Activity, Brush, Eye, Cpu, Save, Upload, Folder, Download, FileJson, Check,
+  Music2, Paintbrush, Scissors, RefreshCw, ChevronDown, UploadCloud
 } from 'lucide-react';
+
+// ─── Style Adapter definitions (Phase 3.1) ───────────────────────────────────
+const STYLE_ADAPTERS = ['None', 'Jazz', 'Techno', 'Orchestral', 'Lo-fi', 'Ambient', 'Hip-hop'] as const;
+type StyleAdapter = (typeof STYLE_ADAPTERS)[number];
 
 const App: React.FC = () => {
   // State
@@ -35,9 +41,37 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'ARRANGEMENT' | 'MIXER'>('ARRANGEMENT');
   const [editMode, setEditMode] = useState<EditViewMode>('SPECTROGRAM');
   const [showPresets, setShowPresets] = useState(false);
-  
+
+  // Phase 3.1: Control Adapter state
+  const [styleAdapter, setStyleAdapter] = useState<StyleAdapter>('None');
+  const [styleStrength, setStyleStrength] = useState(70);
+  const [temperature, setTemperature] = useState(50);
+  const [showAdapterMenu, setShowAdapterMenu] = useState(false);
+
+  // Phase 3.1: CLAP Audio Reference state
+  const [audioRefFile, setAudioRefFile] = useState<File | null>(null);
+  const [audioRefDragging, setAudioRefDragging] = useState(false);
+
+  // Phase 3.2: Inpaint context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    clipId: string;
+    trackId: string;
+  }>({ visible: false, x: 0, y: 0, clipId: '', trackId: '' });
+
+  // Phase 3.3: Export modal
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  // BPM editing
+  const [isEditingBpm, setIsEditingBpm] = useState(false);
+  const [bpmInput, setBpmInput] = useState('');
+  const bpmInputRef = useRef<HTMLInputElement>(null);
+
   const timelineRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRefInputRef = useRef<HTMLInputElement>(null);
 
   // Sync Project State to Audio Engine
   useEffect(() => {
@@ -227,10 +261,74 @@ const App: React.FC = () => {
       setProject(prev => ({ ...prev, currentBar: bar }));
   };
 
+  // ── BPM editing ────────────────────────────────────────────────
+  const startBpmEdit = () => {
+    setBpmInput(String(project.bpm));
+    setIsEditingBpm(true);
+    setTimeout(() => bpmInputRef.current?.select(), 0);
+  };
+
+  const commitBpmEdit = () => {
+    const val = parseInt(bpmInput, 10);
+    if (!isNaN(val) && val >= 40 && val <= 300) {
+      setProject(prev => ({ ...prev, bpm: val }));
+    }
+    setIsEditingBpm(false);
+  };
+
+  // ── CLAP Audio Reference ────────────────────────────────────────
+  const handleAudioRefDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setAudioRefDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('audio/')) {
+      setAudioRefFile(file);
+    }
+  };
+
+  // ── Inpaint Context Menu ────────────────────────────────────────
+  const handleClipContextMenu = (
+    e: React.MouseEvent,
+    trackId: string,
+    clipId: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, clipId, trackId });
+  };
+
+  const handleInpaintClip = () => {
+    // Stub: In production this would send the clip + mask to the inpainting engine
+    setContextMenu(prev => ({ ...prev, visible: false }));
+    const clip = project.tracks
+      .find(t => t.id === contextMenu.trackId)
+      ?.clips.find(c => c.id === contextMenu.clipId);
+    if (clip) {
+      alert(`Inpainting "${clip.name}"…\n\n(Stub: In production this triggers discrete diffusion on the selected region.)`);
+    }
+  };
+
+  const handleRegenerateClip = () => {
+    setContextMenu(prev => ({ ...prev, visible: false }));
+    const clip = project.tracks
+      .find(t => t.id === contextMenu.trackId)
+      ?.clips.find(c => c.id === contextMenu.clipId);
+    if (clip) {
+      alert(`Regenerating "${clip.name}"…\n\n(Stub: In production this re-runs the acoustic renderer on this clip.)`);
+    }
+  };
+
+  const closeContextMenu = useCallback(() => {
+    if (contextMenu.visible) setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [contextMenu.visible]);
+
   return (
-    <div className="flex flex-col h-screen w-screen bg-naw-bg text-slate-200 font-sans selection:bg-naw-accent selection:text-naw-bg">
+    <div
+      className="flex flex-col h-screen w-screen bg-naw-bg text-slate-200 font-sans selection:bg-naw-accent selection:text-naw-bg"
+      onClick={closeContextMenu}
+    >
       
-      {/* Hidden File Input */}
+      {/* Hidden File Inputs */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -238,6 +336,65 @@ const App: React.FC = () => {
         accept=".json" 
         className="hidden" 
       />
+      <input
+        type="file"
+        ref={audioRefInputRef}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f && f.type.startsWith('audio/')) setAudioRefFile(f);
+          e.target.value = '';
+        }}
+        accept="audio/*"
+        className="hidden"
+      />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <ExportModal
+          onClose={() => setShowExportModal(false)}
+          trackCount={project.tracks.length}
+          bpm={project.bpm}
+        />
+      )}
+
+      {/* Context Menu (right-click on clips) */}
+      {contextMenu.visible && (
+        <div
+          className="fixed z-50 bg-naw-panel border border-slate-600 rounded-lg shadow-2xl py-1 w-52"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={handleInpaintClip}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-700 flex items-center gap-2 text-slate-200"
+          >
+            <Paintbrush size={13} className="text-naw-danger" /> Inpaint Region
+          </button>
+          <button
+            onClick={handleRegenerateClip}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-700 flex items-center gap-2 text-slate-200"
+          >
+            <RefreshCw size={13} className="text-naw-accent" /> Regenerate Clip
+          </button>
+          <div className="my-1 border-t border-slate-700" />
+          <button
+            onClick={() => {
+              setProject(prev => ({
+                ...prev,
+                tracks: prev.tracks.map(t =>
+                  t.id === contextMenu.trackId
+                    ? { ...t, clips: t.clips.filter(c => c.id !== contextMenu.clipId) }
+                    : t
+                )
+              }));
+              closeContextMenu();
+            }}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-700 flex items-center gap-2 text-naw-danger"
+          >
+            <Scissors size={13} /> Delete Clip
+          </button>
+        </div>
+      )}
 
       {/* HEADER */}
       <header className="h-14 border-b border-slate-700 flex items-center justify-between px-4 bg-naw-panel z-10 shrink-0">
@@ -245,7 +402,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2 text-naw-accent font-mono font-bold text-xl tracking-tighter">
             <Layers className="w-6 h-6" />
             <span>NAW</span>
-            <span className="text-xs text-slate-500 font-normal px-2 py-0.5 border border-slate-700 rounded">v1.1</span>
+            <span className="text-xs text-slate-500 font-normal px-2 py-0.5 border border-slate-700 rounded">v1.2</span>
           </div>
           
           {/* Transport Controls */}
@@ -272,7 +429,30 @@ const App: React.FC = () => {
 
           <div className="flex flex-col font-mono text-xs ml-4">
              <span className="text-slate-400">BPM</span>
-             <span className="text-naw-accent font-bold text-lg leading-none">{project.bpm}</span>
+             {isEditingBpm ? (
+               <input
+                 ref={bpmInputRef}
+                 value={bpmInput}
+                 onChange={(e) => setBpmInput(e.target.value)}
+                 onBlur={commitBpmEdit}
+                 onKeyDown={(e) => {
+                   if (e.key === 'Enter') commitBpmEdit();
+                   if (e.key === 'Escape') setIsEditingBpm(false);
+                 }}
+                 className="w-16 bg-slate-800 border border-naw-accent rounded px-1 text-naw-accent font-bold text-lg leading-none focus:outline-none"
+                 type="number"
+                 min={40}
+                 max={300}
+               />
+             ) : (
+               <span
+                 onClick={startBpmEdit}
+                 className="text-naw-accent font-bold text-lg leading-none cursor-pointer hover:text-sky-300 transition"
+                 title="Click to edit BPM"
+               >
+                 {project.bpm}
+               </span>
+             )}
           </div>
           <div className="flex flex-col font-mono text-xs ml-4">
              <span className="text-slate-400">BAR</span>
@@ -300,10 +480,20 @@ const App: React.FC = () => {
               >
                   <Upload size={16} />
               </button>
+
+              {/* Export Button (Phase 3.3) */}
+              <button
+                onClick={() => setShowExportModal(true)}
+                className="p-2 text-slate-400 hover:text-naw-success hover:bg-slate-700 rounded flex items-center gap-1"
+                title="Export Stems / Mixdown"
+              >
+                <Music2 size={16} />
+                <span className="text-xs font-bold">Export</span>
+              </button>
               
               <div className="relative">
                 <button 
-                    onClick={() => setShowPresets(!showPresets)}
+                    onClick={(e) => { e.stopPropagation(); setShowPresets(!showPresets); }}
                     className={`p-2 hover:bg-slate-700 rounded flex items-center gap-2 ${showPresets ? 'text-naw-accent bg-slate-700' : 'text-slate-400 hover:text-white'}`}
                     title="Presets"
                 >
@@ -444,21 +634,111 @@ const App: React.FC = () => {
                </div>
            )}
 
-           {/* ControlNet Settings */}
+           {/* ControlNet Settings — Phase 3.1 */}
            <div className="flex flex-col gap-2">
              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <Sliders size={12} /> Control Adapters
              </label>
              <div className="bg-slate-900 rounded p-3 border border-slate-700 flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                    <span className="text-xs text-slate-300">Style Strength</span>
-                    <input type="range" className="w-24 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-naw-accent [&::-webkit-slider-thumb]:rounded-full" />
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-xs text-slate-300">Temperature</span>
-                    <input type="range" className="w-24 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-naw-accent [&::-webkit-slider-thumb]:rounded-full" />
-                </div>
+
+               {/* Style Adapter Dropdown */}
+               <div className="flex flex-col gap-1">
+                 <span className="text-xs text-slate-400">Style Adapter</span>
+                 <div className="relative">
+                   <button
+                     onClick={(e) => { e.stopPropagation(); setShowAdapterMenu(v => !v); }}
+                     className="w-full flex items-center justify-between bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-xs text-slate-200 hover:border-slate-400 transition"
+                   >
+                     <span className="font-semibold">{styleAdapter}</span>
+                     <ChevronDown size={12} className={`transition ${showAdapterMenu ? 'rotate-180' : ''}`} />
+                   </button>
+                   {showAdapterMenu && (
+                     <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded shadow-xl z-30">
+                       {STYLE_ADAPTERS.map(a => (
+                         <button
+                           key={a}
+                           onClick={() => { setStyleAdapter(a); setShowAdapterMenu(false); }}
+                           className={`w-full text-left px-2.5 py-1.5 text-xs hover:bg-slate-700 transition ${styleAdapter === a ? 'text-naw-accent font-bold' : 'text-slate-300'}`}
+                         >
+                           {a === 'None' ? 'None (Off)' : a}
+                         </button>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               </div>
+
+               {/* Style Strength */}
+               <div className="flex flex-col gap-1">
+                 <div className="flex justify-between items-center">
+                   <span className="text-xs text-slate-300">Style Strength</span>
+                   <span className="text-xs font-mono text-naw-accent">{styleStrength}%</span>
+                 </div>
+                 <input
+                   type="range"
+                   min={0} max={100} step={1}
+                   value={styleStrength}
+                   onChange={(e) => setStyleStrength(Number(e.target.value))}
+                   className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-naw-accent [&::-webkit-slider-thumb]:rounded-full"
+                 />
+               </div>
+
+               {/* Temperature */}
+               <div className="flex flex-col gap-1">
+                 <div className="flex justify-between items-center">
+                   <span className="text-xs text-slate-300">Temperature</span>
+                   <span className="text-xs font-mono text-naw-accent">{(temperature / 100).toFixed(2)}</span>
+                 </div>
+                 <input
+                   type="range"
+                   min={0} max={100} step={1}
+                   value={temperature}
+                   onChange={(e) => setTemperature(Number(e.target.value))}
+                   className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-naw-secondary [&::-webkit-slider-thumb]:rounded-full"
+                 />
+               </div>
              </div>
+           </div>
+
+           {/* CLAP Audio Reference — Phase 3.1 */}
+           <div className="flex flex-col gap-2">
+             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+               <UploadCloud size={12} /> Audio Reference (CLAP)
+             </label>
+             <div
+               onDragOver={(e) => { e.preventDefault(); setAudioRefDragging(true); }}
+               onDragLeave={() => setAudioRefDragging(false)}
+               onDrop={handleAudioRefDrop}
+               onClick={() => audioRefInputRef.current?.click()}
+               className={`bg-slate-900 rounded p-3 border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition min-h-[72px] ${
+                 audioRefDragging
+                   ? 'border-naw-accent bg-naw-accent/10'
+                   : audioRefFile
+                   ? 'border-naw-success/60 bg-naw-success/5'
+                   : 'border-slate-700 hover:border-slate-500'
+               }`}
+             >
+               {audioRefFile ? (
+                 <>
+                   <Music2 size={16} className="text-naw-success" />
+                   <span className="text-xs text-naw-success font-semibold truncate max-w-full px-2">{audioRefFile.name}</span>
+                   <button
+                     onClick={(e) => { e.stopPropagation(); setAudioRefFile(null); }}
+                     className="text-[10px] text-slate-500 hover:text-naw-danger transition"
+                   >
+                     Remove
+                   </button>
+                 </>
+               ) : (
+                 <>
+                   <UploadCloud size={16} className="text-slate-500" />
+                   <span className="text-[11px] text-slate-500 text-center">Drop audio file here<br/>or click to browse</span>
+                 </>
+               )}
+             </div>
+             {audioRefFile && (
+               <p className="text-[10px] text-slate-500">CLAP embedding will blend with text prompt at {styleStrength}% strength</p>
+             )}
            </div>
         </div>
 
@@ -545,6 +825,7 @@ const App: React.FC = () => {
                                                 left: `${clip.startBar * PIXELS_PER_BAR}px`,
                                                 width: `${clip.lengthBars * PIXELS_PER_BAR}px`,
                                             }}
+                                            onContextMenu={(e) => handleClipContextMenu(e, track.id, clip.id)}
                                         >
                                             <div className="absolute top-0 left-0 right-0 h-4 px-2 flex items-center bg-black/40 text-[10px] font-bold text-white/80 truncate z-10 backdrop-blur-sm">
                                                 {clip.name}
@@ -619,10 +900,17 @@ const App: React.FC = () => {
              <span className="text-naw-success flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-naw-success animate-pulse"/> Engine Ready</span>
              <span>Sample Rate: 44.1kHz</span>
              <span>Latency: 12ms (ASIO)</span>
+             {styleAdapter !== 'None' && (
+               <span className="text-naw-secondary">Adapter: {styleAdapter} @ {styleStrength}%</span>
+             )}
+             {audioRefFile && (
+               <span className="text-naw-warning">CLAP Ref: {audioRefFile.name}</span>
+             )}
          </div>
          <div className="flex gap-4">
              <span>Memory: 1.2GB / 16GB</span>
              <span>GPU: Neural Engine Active</span>
+             <span className="text-slate-600">v1.2 — Phase 3 UI</span>
          </div>
       </footer>
     </div>
