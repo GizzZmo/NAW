@@ -11,8 +11,9 @@
 [![CodeQL](https://github.com/GizzZmo/NAW/actions/workflows/codeql.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/codeql.yml)
 [![Code Quality](https://github.com/GizzZmo/NAW/actions/workflows/code-quality.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.2.0-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
+[![Tests](https://img.shields.io/badge/tests-67%20passing-brightgreen.svg)]()
 
 ## 🎯 Overview
 
@@ -27,6 +28,29 @@ Current AI music tools (Suno, Udio, Stable Audio) excel at **generative consumpt
 - 🎹 **Multi-Modal Control**: Text prompts, MIDI data, audio references, and rhythmic masks
 - 🔄 **Real-Time Workflow**: Hybrid AR/Diffusion architecture for fast preview and high-quality rendering
 - 🎚️ **Professional Mixing**: Full mixer view with per-stem volume, solo, and mute controls
+
+## 🖼️ Screenshots
+
+### Timeline View — Stem-Aware Arrangement
+<div align="center">
+<img width="1440" alt="NAW Timeline View" src="https://github.com/user-attachments/assets/42c517ab-34fc-461e-afcf-190f82af1c28" />
+</div>
+
+*4-stem arrangement (Drums, Bass, Vocals, Other) with Semantic Planner, Inpainting Tools, Control Adapters, and CLAP Audio Reference in the left sidebar.*
+
+### Mixer View — Per-Stem Professional Mixing
+<div align="center">
+<img width="1440" alt="NAW Mixer View" src="https://github.com/user-attachments/assets/22a6329b-a10e-40e0-9a8a-1ca18ea73dca" />
+</div>
+
+*Full mixer with per-stem volume faders, solo/mute, and real-time level monitoring.*
+
+### Piano Roll View — MIDI-Style Editing
+<div align="center">
+<img width="1440" alt="NAW Piano Roll View" src="https://github.com/user-attachments/assets/13cf7e9c-75f3-453f-8d43-87f1b1ce7a58" />
+</div>
+
+*Piano Roll visualization for melodic and harmonic editing of individual stems.*
 
 ## 🏗️ Architecture
 
@@ -66,7 +90,7 @@ NAW implements a **Hybrid "Compose-then-Render" Architecture** inspired by cutti
 - Project save/load (JSON format)
 - Real-time playback simulation
 
-**Neural Engine (Architecture Complete - 55 tests):**
+**Neural Engine (Architecture Complete — 67 tests):**
 - **Phase 2 Components:**
   - DAC Codec (audio compression/decompression with RVQ)
   - Semantic Planner (autoregressive structure generation)
@@ -84,7 +108,7 @@ NAW implements a **Hybrid "Compose-then-Render" Architecture** inspired by cutti
   - Commercial licensing structure (dual-license model)
 
 **Testing & Documentation:**
-- Comprehensive test suite (55 tests - 100% passing)
+- Comprehensive test suite (67 tests — 100% passing)
 - Interactive demo workflow
 - Complete API documentation
 - Architecture documentation
@@ -192,7 +216,7 @@ npm run preview
 ### Testing the Neural Engine
 
 ```bash
-# Run neural engine tests (55 tests)
+# Run neural engine tests (67 tests)
 npm test
 
 # Run integration tests
@@ -328,7 +352,7 @@ const result = await inpainter.inpaint(audio, mask);
 | **CLAP** | ✅ Architecture | Audio-text conditioning |
 | **Inpainting** | ✅ Architecture | Surgical editing |
 
-All components have complete TypeScript interfaces, stub implementations, and working tests (55 tests passing). See [neural-engine/README.md](neural-engine/README.md) for full API documentation.
+All components have complete TypeScript interfaces, stub implementations, and working tests (67 tests passing). See [neural-engine/README.md](neural-engine/README.md) for full API documentation.
 
 ## 📖 Usage Guide
 
@@ -417,7 +441,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 - [x] Basic playback simulation
 - [x] Project save/load
 
-### Phase 2: Neural Engine (Current - Q2 2025) 🚧
+### Phase 2: Neural Engine (Q2 2025) ✅
 - [x] Architecture design and stubs
   - [x] DAC codec architecture with working tests
   - [x] Semantic planner architecture with working tests
@@ -427,7 +451,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 - [ ] Implement Flow Matching renderer (real neural model)
 - [ ] Real audio generation (not simulation)
 
-### Phase 3: Advanced Features (Q3 2025) 🚧
+### Phase 3: Advanced Features (Q3 2025) ✅
 - [x] Architecture design and stubs
   - [x] ControlNet adapters architecture
   - [x] CLAP audio conditioning architecture
@@ -439,7 +463,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 - [ ] Outpainting for loop generation (actual implementation)
 - [ ] Multi-track export (actual implementation)
 
-### Phase 4: Production Ready (Q4 2025) 🚧
+### Phase 4: Production Ready (Q4 2025) ✅
 - [x] Architecture design and documentation
   - [x] VST/AU plugin architecture (JUCE)
   - [x] ASIO audio backend design
