@@ -28,10 +28,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-        cache: 'npm'
+    
+    - name: Clean node_modules and package-lock.json
+      run: rm -rf node_modules package-lock.json
     
     - name: Install dependencies
-      run: npm ci
+      run: npm install
     
     - name: Run neural engine tests
       run: npm test
