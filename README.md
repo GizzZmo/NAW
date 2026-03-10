@@ -8,12 +8,15 @@
 > Bridging the gap between generative AI and professional music production
 
 [![CI](https://github.com/GizzZmo/NAW/actions/workflows/ci.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/ci.yml)
+[![Neural Engine](https://github.com/GizzZmo/NAW/actions/workflows/neural-engine.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/neural-engine.yml)
 [![CodeQL](https://github.com/GizzZmo/NAW/actions/workflows/codeql.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/codeql.yml)
 [![Code Quality](https://github.com/GizzZmo/NAW/actions/workflows/code-quality.yml/badge.svg)](https://github.com/GizzZmo/NAW/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/en/download/)
 [![Version](https://img.shields.io/badge/version-1.2.0-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
 [![Tests](https://img.shields.io/badge/tests-67%20passing-brightgreen.svg)]()
+[![Phase 1-4](https://img.shields.io/badge/phase%201--4%20tests-45%20passing-brightgreen.svg)]()
 
 ## 🎯 Overview
 
@@ -33,21 +36,21 @@ Current AI music tools (Suno, Udio, Stable Audio) excel at **generative consumpt
 
 ### Timeline View — Stem-Aware Arrangement
 <div align="center">
-<img width="1440" alt="NAW Timeline View" src="https://github.com/user-attachments/assets/42c517ab-34fc-461e-afcf-190f82af1c28" />
+<img width="1440" alt="NAW Timeline View" src="https://github.com/user-attachments/assets/fb9a22c1-886b-4c8b-8216-e2004e0f1bc0" />
 </div>
 
 *4-stem arrangement (Drums, Bass, Vocals, Other) with Semantic Planner, Inpainting Tools, Control Adapters, and CLAP Audio Reference in the left sidebar.*
 
 ### Mixer View — Per-Stem Professional Mixing
 <div align="center">
-<img width="1440" alt="NAW Mixer View" src="https://github.com/user-attachments/assets/22a6329b-a10e-40e0-9a8a-1ca18ea73dca" />
+<img width="1440" alt="NAW Mixer View" src="https://github.com/user-attachments/assets/e09cffb8-124b-4cff-8d63-fd0be1d82d49" />
 </div>
 
 *Full mixer with per-stem volume faders, solo/mute, and real-time level monitoring.*
 
 ### Piano Roll View — MIDI-Style Editing
 <div align="center">
-<img width="1440" alt="NAW Piano Roll View" src="https://github.com/user-attachments/assets/13cf7e9c-75f3-453f-8d43-87f1b1ce7a58" />
+<img width="1440" alt="NAW Piano Roll View" src="https://github.com/user-attachments/assets/4c99045e-756e-4ed6-8ec6-c4244e73156d" />
 </div>
 
 *Piano Roll visualization for melodic and harmonic editing of individual stems.*
@@ -173,8 +176,8 @@ Bar 25-32: "Outro, fade to ambient"
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Node.js** (v18 or later)
-- **npm** or **yarn**
+- **Node.js** (v20 or later) — [Download](https://nodejs.org/en/download/)
+- **pnpm** (v9 or later) — Install via `npm install -g pnpm` or see [pnpm.io](https://pnpm.io/installation)
 - **Gemini API Key** (for AI generation)
 
 ### Installation
@@ -187,7 +190,7 @@ Bar 25-32: "Outro, fade to ambient"
 
 2. **Install dependencies**
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Set up environment**
@@ -209,21 +212,24 @@ Bar 25-32: "Outro, fade to ambient"
 ### Building for Production
 
 ```bash
-npm run build
-npm run preview
+pnpm run build
+pnpm run preview
 ```
 
 ### Testing the Neural Engine
 
 ```bash
 # Run neural engine tests (67 tests)
-npm test
+pnpm test
+
+# Run Phase 1–4 integration tests (45 tests)
+pnpm run test:phase1-4
 
 # Run integration tests
-npm run test:integration
+pnpm run test:integration
 
 # Run interactive demo
-npm run demo
+pnpm run demo
 ```
 
 The neural engine is a complete implementation with stub neural models, demonstrating the full pipeline from text prompt to multi-stem audio generation. See [neural-engine/README.md](neural-engine/README.md) for detailed API documentation.
