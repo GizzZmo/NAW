@@ -4,26 +4,28 @@
 
 # Neural Audio Workstation (NAW)
 
-> **A Production-Grade AI Music Creation Environment**  
-> Bridging the gap between generative AI and professional music production
+## Screenshots
 
-[![Version](https://img.shields.io/badge/version-1.3.0-green.svg)]()
-[![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
+### Main Interface
+![NAW UI Overview](assets/screenshots/naw-ui-overview.jpg)
 
-## Key Features
+### Piano Roll
+![Piano Roll](assets/screenshots/piano-roll.jpg)
+
+### Logo
+![NAW Logo](assets/logo/naw-logo.jpg)
+
+> **A Production-Grade AI Music Creation Environment**
 
 ### AudioWorklet & MIDI Integration (v1.3+)
-- AudioWorklet engine initializes on first play/generate (look-ahead scheduler + meters).
-- Web MIDI service enumerates input/output devices and receives note messages.
-- Status indicators in the footer show Worklet readiness, MIDI device count, and live meters.
+- AudioWorklet engine initializes on first play/generate.
+- MIDI notes route into selected track with clip-aware placement for Piano Roll.
+- Note-on and note-off supported.
+- Worklet synthesizes audible tones (louder 0.35 gain).
+- MIDI device list in sidebar.
+- Status indicators in footer.
 
 ### Style-Aware Generation (v1.3)
-The Semantic Planner now respects UI controls:
-- **Style Adapter** (Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop)
-- **Style Strength** (0–100%)
-- **Temperature** (creativity control)
-- **CLAP Audio Reference** (filename influences the prompt)
+The Semantic Planner respects UI controls for style adapters, strength, temperature, and CLAP reference.
 
-Right-click a clip → **Regenerate Clip** re-runs the planner focused on that stem.
-
-See full documentation in the repository for architecture, roadmap, and usage.
+See full documentation in the repository.
