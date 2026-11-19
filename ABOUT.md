@@ -166,3 +166,7 @@ See [LICENSE](LICENSE) and [COMMERCIAL_LICENSE.md](docs/COMMERCIAL_LICENSE.md) f
 <strong>Built with ❤️ for the future of music production</strong><br>
 <em>Stem-aware · Surgical · Multi-modal · Professional</em>
 </div>
+
+
+## v1.3 Update
+Added AudioWorklet integration, MIDI routing, style-aware generation, and expanded documentation with screenshots.

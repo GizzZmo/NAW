@@ -1,3 +1,10 @@
+
+## Completed in v1.3
+- AudioWorklet engine with metering and note synthesis
+- MIDI input routing with clip-aware Piano Roll placement
+- Style-aware generation controls
+- Documentation and screenshot assets
+
 # Neural Audio Workstation (NAW) - Development Roadmap
 
 > **Technical and Product Roadmap for Next-Generation Music Production**

@@ -2,6 +2,35 @@
 
 > **Current Implementation Status and Future Feature Roadmap**
 
+
+## 🚀 v1.3 Features (Current)
+
+### AudioWorklet Engine
+- ✅ Look-ahead scheduler for sample-accurate timing
+- ✅ Real-time metering (RMS / peak) in footer
+- ✅ Polyphonic note synthesis (sine with envelope)
+- ✅ Note-On / Note-Off via MessagePort
+- ✅ Initializes on user gesture
+
+### MIDI Integration
+- ✅ Web MIDI device enumeration (inputs + outputs)
+- ✅ Note-On routing into selected track
+- ✅ Note-Off support
+- ✅ Clip-aware note placement for Piano Roll
+- ✅ MIDI device list in sidebar
+- ✅ Live status in footer
+
+### Style-Aware Generation
+- ✅ Style Adapters (Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop)
+- ✅ Style Strength and Temperature controls
+- ✅ CLAP Audio Reference (filename influences prompt)
+- ✅ Per-clip Regenerate (right-click)
+
+### UI Polish
+- ✅ Footer status indicators (Worklet, MIDI, meters)
+- ✅ Screenshots and logo assets
+- ✅ Comprehensive documentation
+
 ## 🎯 Current Features (v1.1.0)
 
 ### Core Architecture
