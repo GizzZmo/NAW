@@ -69,16 +69,27 @@ import { StemType } from "../types";
  * 
  * @param {string} prompt - High-level musical description (e.g., "Uplifting house, energetic")
  * @param {number} bpm - Desired tempo (Gemini may override with `suggestedBpm`)
+ * @param {object} [options] - Optional generation controls
+ * @param {string} [options.styleAdapter] - Style adapter name (Jazz, Techno, etc.)
+ * @param {number} [options.styleStrength] - Style strength 0-100
+ * @param {number} [options.temperature] - Creativity 0-100 (mapped to model temperature)
+ * @param {string} [options.audioRefName] - Optional CLAP reference audio filename
  * @returns {Promise<Object>} Blueprint object with title, suggestedBpm, and stems array
  * @throws {Error} If API key is missing
  * 
  * @example
- * const blueprint = await generateSongBlueprint("Dark techno, 130 BPM, aggressive", 130);
- * console.log(blueprint.title); // "Dark Techno Groove"
- * console.log(blueprint.stems[0].type); // "DRUMS"
- * console.log(blueprint.stems[0].pattern.length); // ~16 events
+ * const blueprint = await generateSongBlueprint("Dark techno, 130 BPM, aggressive", 130, { styleAdapter: 'Techno', styleStrength: 80 });
  */
-export const generateSongBlueprint = async (prompt: string, bpm: number) => {
+export const generateSongBlueprint = async (
+  prompt: string, 
+  bpm: number,
+  options: {
+    styleAdapter?: string;
+    styleStrength?: number;
+    temperature?: number;
+    audioRefName?: string;
+  } = {}
+) => {
   // ──────────────────────────────────────────────────────────────
   // 1. VALIDATE API KEY
   // ──────────────────────────────────────────────────────────────
@@ -127,17 +138,36 @@ export const generateSongBlueprint = async (prompt: string, bpm: number) => {
     }
   `;
 
+  // Build enhanced prompt with style and reference controls
+  let enhancedPrompt = prompt;
+  const { styleAdapter, styleStrength = 70, temperature = 50, audioRefName } = options;
+
+  if (styleAdapter && styleAdapter !== 'None') {
+    const strengthDesc = styleStrength >= 80 ? 'strictly in the style of' : 
+                         styleStrength >= 50 ? 'strongly influenced by' : 
+                         'with subtle elements of';
+    enhancedPrompt += `. Generate ${strengthDesc} ${styleAdapter}.`;
+  }
+
+  if (audioRefName) {
+    enhancedPrompt += `. Inspired by the audio reference: ${audioRefName}.`;
+  }
+
+  // Map temperature 0-100 to model temperature 0.0-1.0
+  const modelTemperature = Math.max(0, Math.min(1, temperature / 100));
+
   try {
     // ──────────────────────────────────────────────────────────────
     // 3. SEND REQUEST TO GEMINI API
     // ──────────────────────────────────────────────────────────────
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: enhancedPrompt,
       config: {
         systemInstruction: systemInstruction,
         responseMimeType: "application/json", // Force JSON output
         maxOutputTokens: 4000, // Prevent runaway generation (safety limit)
+        temperature: modelTemperature,
         
         // Enforce structured schema to reduce parsing errors
         responseSchema: {
