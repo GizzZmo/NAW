@@ -1,14 +1,14 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
 # Neural Audio Workstation (NAW)
 
 **A Production-Grade AI Music Creation Environment**  
 Bridging generative AI and professional music production workflows
 
-[![Version](https://img.shields.io/badge/version-1.3.0-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.4.0-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
+
 </div>
 
 ## Screenshots
@@ -19,6 +19,9 @@ Bridging generative AI and professional music production workflows
 ### Piano Roll
 ![Piano Roll](assets/screenshots/piano-roll.jpg)
 
+### Mixer
+![Mixer](assets/screenshots/mixer.jpg)
+
 ### Logo
 ![NAW Logo](assets/logo/naw-logo.jpg)
 
@@ -26,74 +29,75 @@ Bridging generative AI and professional music production workflows
 
 ## What is NAW?
 
-NAW is a browser-based Digital Audio Workstation that combines **stem-level AI music generation** with professional production tools. It uses a two-stage pipeline:
+NAW is a browser-based Digital Audio Workstation that combines **stem-level AI music generation** with professional production tools.
 
-1. **Semantic Planner** (Google Gemini) – generates structured musical patterns from text prompts
-2. **Audio Engine** – real-time playback via Web Audio API + AudioWorklet, with MIDI integration
+**Current (v1.4) behavior:** NAW generates **editable symbolic note patterns** (MIDI-style events) via Google Gemini. It does **not** yet generate high-fidelity audio waveforms. Real neural audio models (DAC, CLAP, Flow Matching, vocoders) remain architectural stubs.
 
-The architecture is designed so that real neural audio models (DAC, CLAP, diffusion inpainting) can be plugged in later without rewriting the UI or scheduling layer.
+The architecture is designed so those models can be plugged in later without rewriting the UI or scheduling layer.
 
 ---
 
-## Key Features (v1.3+)
+## Key Features (v1.4)
 
-### Style-Aware Generation
-- **Style Adapters**: Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop
-- **Style Strength** (0–100%) and **Temperature** controls
-- **CLAP Audio Reference** – drop an audio file to influence generation
-- Right-click any clip → **Regenerate Clip** re-runs the planner focused on that stem
+### Symbolic Generation (Gemini)
+- Server-side `/api/generate-blueprint` endpoint (Gemini key never shipped to the browser)
+- Style Adapters: Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop
+- Style Strength and Temperature controls
+- Per-clip regenerate
 
 ### AudioWorklet Engine
-- Dedicated DSP thread via AudioWorklet (look-ahead scheduler)
-- Real-time metering (RMS / peak) displayed in the footer
-- Simple polyphonic note synthesis for MIDI feedback and metronome
-- Initializes on first user gesture (Play / Generate)
+- Dedicated DSP thread with look-ahead scheduler
+- Rollback-safe initialization
+- Real master RMS metering (per-track meters not yet available)
+- Initializes on first user gesture
 
-### MIDI Integration
-- Web MIDI API – enumerate input/output devices
-- **Note-On / Note-Off** routing into the currently selected track
-- **Clip-aware placement** – notes land in the correct clip and appear in Piano Roll
-- MIDI device list in the sidebar
-- Footer status: Worklet readiness, device count, live meters
+### MIDI
+- Web MIDI device enumeration
+- Note-On / Note-Off pairing by device/channel/note with held duration recording
+- Clip-aware placement
+- Standard MIDI File export (GM note conversion, note-off priority)
+
+### Project & Export
+- Debounced local autosave + recovery on startup
+- Versioned project envelopes (legacy JSON still loads)
+- Export modal: working MIDI download; audio/Ableton/Logic/Pro Tools marked unavailable
 
 ### Arrangement & Editing
-- Multi-track timeline with stem-colored clips
-- Piano Roll and Spectrogram views
+- Multi-track timeline, piano roll, spectrogram views
 - Mixer with volume, solo, mute
 - Prompt Lane for section-level style changes
-- Save / Load projects as JSON
-- Export modal (stems / mixdown – stub)
 
 ---
 
 ## Quick Start
 
 ```bash
-# Clone
 git clone https://github.com/GizzZmo/NAW.git
 cd NAW
+pnpm install   # or npm install
 
-# Install
-npm install   # or pnpm install
+# For local API route (recommended)
+npm run dev:vercel
 
-# Run
+# Or Vite only (API route not executed)
 npm run dev
 ```
 
-Open the local URL.  
-Click **Play** or **Generate** once to initialize AudioWorklet and MIDI (browser requires a user gesture).
+Create a `.env` (or Vercel environment) with `GEMINI_API_KEY` for the server. The key is never sent to the browser.
+
+Open the local URL. Click **Play** or **Generate** once to initialize AudioWorklet and MIDI.
 
 ### Generate music
-1. Type a prompt in the Semantic Planner (e.g. “Uplifting house track with deep bass, 128 BPM”)
+1. Type a prompt (e.g. “Uplifting house track with deep bass, 128 BPM”)
 2. Optionally select a Style Adapter and adjust Strength / Temperature
-3. Click **Generate Skeleton**
-4. Clips appear on the timeline; switch to Piano Roll to inspect notes
+3. Click **Generate**
+4. Symbolic clips appear on the timeline; switch to Piano Roll to inspect notes
 
 ### Use MIDI
 1. Connect a MIDI keyboard or pad
 2. Click **Play** (initializes MIDI)
 3. Select a track
-4. Play notes – they appear in the clip and you hear them via the AudioWorklet synthesizer
+4. Play notes – they are recorded with real held duration and heard via the AudioWorklet synthesizer
 
 ---
 
@@ -106,57 +110,39 @@ Click **Play** or **Generate** once to initialize AudioWorklet and MIDI (browser
 └──────────────────────────┬──────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────┐
+│              /api/generate-blueprint (server)           │
+│         Gemini key stays server-side                    │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────┐
 │                   AudioWorkletEngine                    │
-│  Look-ahead Scheduler │ Meters │ Note Synthesis         │
+│  Look-ahead Scheduler │ Master RMS │ Note Synthesis     │
 └──────────────────────────┬──────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────┐
 │                     MidiService                         │
-│  Device enumeration │ Note routing │ File I/O           │
+│  Device enumeration │ Note pairing │ MIDI File I/O      │
 └─────────────────────────────────────────────────────────┘
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full technical design and [ROADMAP.md](ROADMAP.md) for planned phases.
+See [ARCHITECTURE.md](ARCHITECTURE.md), [FEATURES.md](FEATURES.md), [neural-engine/CAPABILITY_STATUS.md](neural-engine/CAPABILITY_STATUS.md), and [NAW_1.4_REVIEW.md](NAW_1.4_REVIEW.md).
 
 ---
 
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [FEATURES.md](FEATURES.md) | Detailed feature list and status |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | System design, data flow, DSP |
-| [ROADMAP.md](ROADMAP.md) | Phase 1–4 plan and future work |
-| [API.md](API.md) | Service interfaces and types |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
-| [ABOUT.md](ABOUT.md) | Project background |
-
----
-
-## Tech Stack
-
-- **Frontend**: React 18, TypeScript, Tailwind CSS, Lucide icons
-- **Audio**: Web Audio API, AudioWorklet, Web MIDI API
-- **AI**: Google Gemini (Semantic Planner)
-- **Build**: Vite
-- **State**: React hooks (no external state library)
-
----
-
-## Project Status
+## Project Status (v1.4)
 
 | Component | Status |
 |-----------|--------|
-| Semantic Planner (Gemini) | ✅ Working |
+| Symbolic Planner (Gemini, server-side) | ✅ Working |
 | Style Adapters & Controls | ✅ Working |
-| AudioWorklet Engine | ✅ Working (synthesis + meters) |
-| MIDI Input / Routing | ✅ Working |
-| Piano Roll | ✅ Working |
-| Timeline / Arrangement | ✅ Working |
-| Mixer | ✅ Working |
+| AudioWorklet Engine (synthesis + master meter) | ✅ Working |
+| MIDI Input / Recording / Export | ✅ Working |
+| Autosave + versioned projects | ✅ Working |
+| Piano Roll / Timeline / Mixer | ✅ Working |
 | Real neural audio models | 🚧 Stubbed |
-| Export (audio) | 🚧 Stubbed |
-| ASIO / low-latency backend | 🚧 Planned |
+| Audio / DAW export (WAV, Ableton, Logic) | 🚧 Unavailable (UI says so) |
+| Per-track metering | 🚧 Planned |
+| Auth / rate limiting on API | 🚧 Required before public deploy |
 
 ---
 
