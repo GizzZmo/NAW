@@ -36,6 +36,7 @@
  */
 
 import { StemType, Track, Clip, NoteEvent } from '../types';
+import { audioWorkletEngine } from './audio/AudioWorkletEngine';
 
 /**
  * Lookup table for converting note names to base frequencies (C0 reference).
@@ -110,6 +111,14 @@ const getFreq = (note: string | number): number => {
  * @class AudioEngine
  */
 class AudioEngine {
+  /** Prefer the shared AudioWorklet context when available. */
+  private getSharedContext(): AudioContext | null {
+    if (audioWorkletEngine.initialized && audioWorkletEngine.audioContext) {
+      return audioWorkletEngine.audioContext;
+    }
+    return this.ctx;
+  }
+
   /** Web Audio context (master clock and DSP graph root) */
   ctx: AudioContext | null = null;
   
@@ -400,7 +409,28 @@ class AudioEngine {
      trackGain.gain.value = track.volume * event.velocity;
      trackGain.connect(this.masterGain);
      
-     // Route to stem-specific synthesis
+ 
+    // Tighter AudioWorklet integration: send real note data when worklet is ready
+    if (audioWorkletEngine.initialized && track.type !== StemType.DRUMS) {
+      const freq = getFreq(event.note);
+      if (freq > 0) {
+        audioWorkletEngine.sendDspMessage({
+          type: 'noteOn',
+          freq,
+          vel: Math.min(1, (track.volume ?? 1) * event.velocity),
+        });
+        // Schedule a noteOff after the duration
+        const durationSecs = (event.duration || 1) * (60 / this.bpm / 4);
+        audioWorkletEngine.scheduleEvent({
+          time: time + durationSecs,
+          callback: () => {
+            audioWorkletEngine.sendDspMessage({ type: 'noteOff', freq });
+          },
+        });
+      }
+    }
+
+    // Route to stem-specific synthesis
      if (track.type === StemType.DRUMS) {
         const type = String(event.note).toUpperCase();
         if (type === 'KICK') this.playKick(time, trackGain);
