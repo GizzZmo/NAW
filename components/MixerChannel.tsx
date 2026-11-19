@@ -5,24 +5,28 @@ import { STEM_COLORS } from '../constants';
 interface MixerChannelProps {
   track: Track;
   onUpdate: (id: string, updates: Partial<Track>) => void;
-  isPlaying: boolean; // Used to animate meter
+  isPlaying: boolean;
 }
 
-export const MixerChannel: React.FC<MixerChannelProps> = ({ track, onUpdate, isPlaying }) => {
+export const MixerChannel: React.FC<MixerChannelProps> = ({ track, onUpdate }) => {
   return (
     <div className="flex flex-col items-center w-24 bg-naw-surface border-r border-slate-700 py-4 h-full relative">
       <div className="text-xs font-mono font-bold text-slate-400 mb-2 truncate px-2 w-full text-center">
         {track.name}
       </div>
 
-      {/* Gain Meter Simulation */}
-      <div className="w-4 h-48 bg-slate-900 rounded-full overflow-hidden relative mb-4 border border-slate-600">
-        <div 
-          className="absolute bottom-0 left-0 w-full transition-all duration-75 ease-out"
-          style={{ 
-            height: isPlaying && !track.muted ? `${Math.random() * 80 + 20}%` : '0%', 
-            backgroundColor: STEM_COLORS[track.type] 
-          }}
+      {/* Per-track metering is intentionally not simulated. The current DSP
+          graph exposes a master meter only; showing random channel levels is
+          misleading until independent track outputs are routed. */}
+      <div
+        className="w-4 h-48 bg-slate-900 rounded-full overflow-hidden relative mb-4 border border-slate-600"
+        role="img"
+        aria-label={`${track.name} level meter unavailable: per-track DSP routing is not connected`}
+        title="Per-track metering will be enabled when the audio graph exposes individual track outputs."
+      >
+        <div
+          className="absolute bottom-0 left-0 w-full h-0"
+          style={{ backgroundColor: STEM_COLORS[track.type] }}
         />
         {/* Graticule */}
         <div className="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none opacity-30">

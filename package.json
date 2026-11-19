@@ -8,10 +8,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "tsx neural-engine/test.ts",
+    "test": "tsx neural-engine/test.ts && tsx --test services/audio/AudioWorkletEngine.test.ts services/midi/MidiRecordingBuffer.test.ts services/midi/MidiFileIO.test.ts",
     "test:integration": "tsx neural-engine/tests/integration.test.ts",
     "test:phase1-4": "tsx neural-engine/tests/phase1-4.test.ts",
-    "demo": "tsx neural-engine/demo.ts"
+    "demo": "tsx neural-engine/demo.ts",
+    "test:audio": "tsx --test services/audio/AudioWorkletEngine.test.ts",
+    "test:midi": "tsx --test services/midi/MidiRecordingBuffer.test.ts",
+    "test:midi-io": "tsx --test services/midi/MidiFileIO.test.ts",
+    "typecheck": "tsc --noEmit",
+    "dev:vercel": "vercel dev"
   },
   "dependencies": {
     "@google/genai": "^1.33.0",
