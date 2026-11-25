@@ -17,7 +17,7 @@ This document distinguishes implemented application behavior from planned model 
 
 ## Product behavior
 
-NAW 1.4 should describe the current generation result as an **editable symbolic arrangement**. It must not report a completed high-fidelity audio render when only note patterns have been generated. The UI labels and About panel follow this distinction.
+NAW 1.6 should describe the current generation result as an **editable symbolic arrangement**. It must not report a completed high-fidelity audio render when only note patterns have been generated. The UI labels and About panel follow this distinction. Synthesized WAV mixdown exports are of prototype oscillators, not neural models.
 
 ## Criteria before claiming production AI audio generation
 

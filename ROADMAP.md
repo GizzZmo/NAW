@@ -500,11 +500,11 @@ This roadmap is a living document. Contributions are welcome!
   - VST/AU plugin architecture (JUCE)
   - TensorRT optimization configuration
   - Commercial licensing structure
-- **2026-11-25**: v1.6 – Roadmap advances
-  - True per-track RMS metering via AnalyserNodes
-  - Synthesized WAV mixdown export (OfflineAudioContext)
-  - API rate limiting (10/min) + optional NAW_API_KEY
-  - Neural model status clarified as architecture + stubs (no weights loaded)
+- **2026-11-25**: Documentation refresh for v1.6
+  - README: removed duplicate status table, updated Key Features and current-behavior text
+  - FEATURES.md: rewritten for v1.6 (limitations, planned items, date)
+  - CAPABILITY_STATUS.md: product-behavior note updated
+  - API.md: server-side endpoint, rate limiting, metering methods, OfflineRenderer
 
 **Last Updated**: November 25, 2026  
 **Maintainer**: @GizzZmo  
