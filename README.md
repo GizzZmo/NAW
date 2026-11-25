@@ -5,7 +5,7 @@
 **A Production-Grade AI Music Creation Environment**  
 Bridging generative AI and professional music production workflows
 
-[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 
@@ -129,7 +129,22 @@ See [ARCHITECTURE.md](ARCHITECTURE.md), [FEATURES.md](FEATURES.md), [neural-engi
 
 ---
 
-## Project Status (v1.5)
+## Project Status (v1.6)
+
+| Component | Status |
+|-----------|--------|
+| Symbolic Planner (Gemini, server-side) | ✅ Working |
+| Style Adapters & Controls | ✅ Working |
+| AudioWorklet Engine (synthesis + master meter) | ✅ Working |
+| MIDI Input / Recording / Export | ✅ Working |
+| Autosave + versioned projects | ✅ Working |
+| Piano Roll / Timeline / Mixer | ✅ Working |
+| Per-track RMS metering | ✅ AnalyserNode-based |
+| Synthesized WAV mixdown export | ✅ OfflineAudioContext |
+| API rate limiting + optional key | ✅ In-memory + NAW_API_KEY |
+| Real neural audio models | 🚧 Architecture + stubs (no pretrained weights) |
+| DAW project export (Ableton, Logic, Pro Tools) | 🚧 Planned |
+| Auth / distributed rate limiting | 🚧 Basic in-memory; production needs Redis/KV |
 
 | Component | Status |
 |-----------|--------|

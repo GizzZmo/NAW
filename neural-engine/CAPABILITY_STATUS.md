@@ -1,17 +1,19 @@
-# Neural Engine Capability Status (NAW 1.4)
+# Neural Engine Capability Status (NAW 1.6)
 
 This document distinguishes implemented application behavior from planned model architecture. Class names and architecture diagrams do not imply that pretrained model weights or production inference are present.
 
-| Component | NAW 1.4 status | Notes |
+| Component | NAW 1.6 status | Notes |
 |---|---|---|
 | Gemini semantic planner | Integrated symbolic generation | Calls the server-side Gemini endpoint and returns structured note patterns. It does not generate audio waveforms. |
-| DAC codec | Prototype / placeholder | No pretrained DAC checkpoint or production encoder/decoder is loaded. |
-| Acoustic renderer | Not implemented | No trained Flow Matching / diffusion model is loaded. |
-| Vocoder | Not production-ready | No verified pretrained vocoder inference pipeline is connected. |
-| CLAP conditioning | Not implemented as model inference | Reference filename is currently descriptive text context only; uploaded audio is not embedded. |
-| ControlNet adapters | Prompt-level controls only | Style selections modify prompt context; trained adapters are not loaded. |
-| Spectrogram inpainting | Prototype | The UI/workflow is not connected to a trained generative inpainting model. |
-| Per-track metering | Activity-based (v1.5) | Note-triggered decaying levels shown in Mixer. Full independent track DSP routing and true RMS still pending. |
+| DAC codec | Architecture + stub | No pretrained DAC checkpoint or production encoder/decoder is loaded. Interface ready for future ONNX/WASM. |
+| Acoustic renderer | Architecture + stub | No trained Flow Matching / diffusion model is loaded. |
+| Vocoder | Architecture + stub | No verified pretrained vocoder inference pipeline is connected. |
+| CLAP conditioning | Architecture + stub | Reference filename is descriptive text context only; uploaded audio is not embedded. |
+| ControlNet adapters | Prompt-level controls | Style selections modify prompt context; trained adapters are not loaded. |
+| Spectrogram inpainting | UI + stub | The UI/workflow is not connected to a trained generative inpainting model. |
+| Per-track metering | True RMS (v1.6) | Per-track AnalyserNodes provide real RMS from the live synthesis graph. |
+| Audio export | Synthesized WAV mixdown (v1.6) | OfflineAudioContext render of prototype oscillators to WAV. Neural stem export still pending. |
+| API protection | Rate limiting + optional key (v1.6) | In-memory 10 req/min per client + optional `NAW_API_KEY` header check. Ephemeral on serverless. |
 
 ## Product behavior
 

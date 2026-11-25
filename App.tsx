@@ -15,6 +15,7 @@ import { SpectrogramEditor } from './components/SpectrogramEditor';
 import { PianoRoll } from './components/PianoRoll';
 import { PromptLane } from './components/PromptLane';
 import { ExportModal } from './components/ExportModal';
+import { renderProjectToWav, downloadBlob } from './services/audio/OfflineRenderer';
 import { AboutModal } from './components/AboutModal';
 import { 
   Play, Pause, Square, Mic, Wand2, Layers, Sliders, Info, MoreHorizontal, 
@@ -92,6 +93,7 @@ const App: React.FC = () => {
   }>({ visible: false, x: 0, y: 0, clipId: '', trackId: '' });
 
   const [showExportModal, setShowExportModal] = useState(false);
+  const [isExportingWav, setIsExportingWav] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
   const [workletReady, setWorkletReady] = useState(false);
@@ -176,7 +178,7 @@ const App: React.FC = () => {
       return;
     }
     const id = window.setInterval(() => {
-      setTrackMeters(audioEngine.getTrackMeterLevels());
+      setTrackMeters(audioEngine.getTrueTrackRms());
     }, 50);
     return () => window.clearInterval(id);
   }, [project.isPlaying]);
@@ -550,6 +552,20 @@ const App: React.FC = () => {
         <ExportModal
           onClose={() => setShowExportModal(false)}
           onExportMidi={() => { /* MIDI export handler wired in full UI */ setShowExportModal(false); }}
+          isExportingWav={isExportingWav}
+          onExportWavMixdown={async () => {
+            setIsExportingWav(true);
+            try {
+              const blob = await renderProjectToWav(project.tracks, project.bpm, project.totalBars);
+              downloadBlob(blob, `naw-mixdown-${Date.now()}.wav`);
+            } catch (err) {
+              console.error(err);
+              alert('WAV export failed.');
+            } finally {
+              setIsExportingWav(false);
+              setShowExportModal(false);
+            }
+          }}
           trackCount={project.tracks.length}
           bpm={project.bpm}
         />
