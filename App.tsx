@@ -98,6 +98,7 @@ const App: React.FC = () => {
   const [midiReady, setMidiReady] = useState(false);
   const [midiDevices, setMidiDevices] = useState<{id: string; name: string; type: string}[]>([]);
   const [meter, setMeter] = useState({ rmsL: 0, rmsR: 0 });
+  const [trackMeters, setTrackMeters] = useState<Record<string, number>>({});
 
   const midiBufferRef = useRef(new MidiRecordingBuffer());
 
@@ -166,6 +167,18 @@ const App: React.FC = () => {
     };
     loop();
     return () => cancelAnimationFrame(animationId);
+  }, [project.isPlaying]);
+
+  // Poll per-track activity meters while playing
+  useEffect(() => {
+    if (!project.isPlaying) {
+      setTrackMeters({});
+      return;
+    }
+    const id = window.setInterval(() => {
+      setTrackMeters(audioEngine.getTrackMeterLevels());
+    }, 50);
+    return () => window.clearInterval(id);
   }, [project.isPlaying]);
 
   const handleSaveProject = () => {
@@ -647,7 +660,7 @@ const App: React.FC = () => {
           ) : (
             <div className="flex-1 flex overflow-x-auto">
               {project.tracks.map(track => (
-                <MixerChannel key={track.id} track={track} onUpdate={handleTrackUpdate} isPlaying={project.isPlaying} />
+                <MixerChannel key={track.id} track={track} onUpdate={handleTrackUpdate} isPlaying={project.isPlaying} meterLevel={trackMeters[track.id] ?? 0} />
               ))}
               <div className="w-24 flex flex-col items-center justify-end p-4">
                 <div className="w-4 h-48 bg-slate-900 rounded-full overflow-hidden relative border border-slate-600">

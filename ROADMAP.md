@@ -500,19 +500,11 @@ This roadmap is a living document. Contributions are welcome!
   - VST/AU plugin architecture (JUCE)
   - TensorRT optimization configuration
   - Commercial licensing structure
-- **2026-03-04**: Phase 3 & 4 UI implementation (v1.2):
-  - Style adapter selector dropdown (Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop)
-  - Functional style strength and temperature sliders with live value display
-  - CLAP audio reference drag-and-drop slot
-  - Export modal (WAV Stems / Mixdown / Ableton / Logic / Pro Tools)
-  - Configurable sample rate (44.1k–96k) and bit depth (16/24/32-bit)
-  - Right-click context menu on clips (Inpaint / Regenerate / Delete)
-  - Click-to-edit BPM field
-  - Proper Vite + Tailwind v4 build pipeline (fully bundled, no CDN dependency)
-  - Status bar shows active adapter and CLAP reference file
+- **2026-11-25**: v1.5 – Per-track activity metering
+  - Added note-triggered, exponentially decaying activity meters in the Mixer
+  - Intermediate step toward full independent per-track DSP routing and true RMS metering
+  - Updated FEATURES.md, CAPABILITY_STATUS.md, and README status table
 
----
-
-**Last Updated**: March 4, 2026  
+**Last Updated**: November 25, 2026  
 **Maintainer**: @GizzZmo  
-**Status**: Phase 1 Complete ✅ | Phase 2 Architecture Complete ✅ | Phase 3 & 4 Architectures Complete ✅ | Phase 3 UI Complete ✅ | Implementation In Progress 🚧
+**Status**: Phase 1 Complete ✅ | Phase 2 Architecture Complete ✅ | Phase 3 & 4 Architectures Complete ✅ | Phase 3 UI Complete ✅ | Implementation In Progress 🚧 | v1.5 Activity Metering ✅

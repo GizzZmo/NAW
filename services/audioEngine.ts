@@ -158,6 +158,43 @@ class AudioEngine {
   /** Reference to project tracks (updated from App.tsx) */
   tracks: Track[] = [];
 
+  /** Per-track activity meters (0-1), decaying over time. Intermediate step toward full DSP routing. */
+  private trackMeterLevels = new Map<string, { level: number; lastUpdate: number }>();
+
+  /**
+   * Bumps a track's meter based on note activity.
+   * Level is set to max(current, velocity*volume) and decays exponentially when queried.
+   */
+  private bumpTrackMeter(trackId: string, intensity: number): void {
+    const now = performance.now();
+    const existing = this.trackMeterLevels.get(trackId);
+    const current = existing ? this.decayLevel(existing.level, existing.lastUpdate, now) : 0;
+    const newLevel = Math.max(current, Math.min(1, intensity));
+    this.trackMeterLevels.set(trackId, { level: newLevel, lastUpdate: now });
+  }
+
+  private decayLevel(level: number, lastUpdate: number, now: number): number {
+    const elapsed = (now - lastUpdate) / 1000; // seconds
+    // Decay to ~0 in ~0.8s (tau ≈ 0.25s)
+    return level * Math.exp(-elapsed / 0.25);
+  }
+
+  /**
+   * Returns current per-track meter levels (0-1).
+   * Call periodically from the UI while playing.
+   */
+  getTrackMeterLevels(): Record<string, number> {
+    const now = performance.now();
+    const result: Record<string, number> = {};
+    for (const [id, data] of this.trackMeterLevels) {
+      const decayed = this.decayLevel(data.level, data.lastUpdate, now);
+      result[id] = decayed;
+      // Optionally clean up very low values
+      if (decayed < 0.01) this.trackMeterLevels.delete(id);
+    }
+    return result;
+  }
+
   /**
    * Initializes the audio context.
    * 
@@ -408,6 +445,9 @@ class AudioEngine {
      const trackGain = this.ctx.createGain();
      trackGain.gain.value = track.volume * event.velocity;
      trackGain.connect(this.masterGain);
+
+     // Update per-track activity meter (intermediate until full independent track routing)
+     this.bumpTrackMeter(track.id, track.volume * event.velocity);
      
  
     // Tighter AudioWorklet integration: send real note data when worklet is ready

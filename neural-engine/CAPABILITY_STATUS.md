@@ -11,6 +11,7 @@ This document distinguishes implemented application behavior from planned model 
 | CLAP conditioning | Not implemented as model inference | Reference filename is currently descriptive text context only; uploaded audio is not embedded. |
 | ControlNet adapters | Prompt-level controls only | Style selections modify prompt context; trained adapters are not loaded. |
 | Spectrogram inpainting | Prototype | The UI/workflow is not connected to a trained generative inpainting model. |
+| Per-track metering | Activity-based (v1.5) | Note-triggered decaying levels shown in Mixer. Full independent track DSP routing and true RMS still pending. |
 
 ## Product behavior
 
