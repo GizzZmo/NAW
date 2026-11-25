@@ -500,11 +500,12 @@ This roadmap is a living document. Contributions are welcome!
   - VST/AU plugin architecture (JUCE)
   - TensorRT optimization configuration
   - Commercial licensing structure
-- **2026-11-25**: v1.5 – Per-track activity metering
-  - Added note-triggered, exponentially decaying activity meters in the Mixer
-  - Intermediate step toward full independent per-track DSP routing and true RMS metering
-  - Updated FEATURES.md, CAPABILITY_STATUS.md, and README status table
+- **2026-11-25**: v1.6 – Roadmap advances
+  - True per-track RMS metering via AnalyserNodes
+  - Synthesized WAV mixdown export (OfflineAudioContext)
+  - API rate limiting (10/min) + optional NAW_API_KEY
+  - Neural model status clarified as architecture + stubs (no weights loaded)
 
 **Last Updated**: November 25, 2026  
 **Maintainer**: @GizzZmo  
-**Status**: Phase 1 Complete ✅ | Phase 2 Architecture Complete ✅ | Phase 3 & 4 Architectures Complete ✅ | Phase 3 UI Complete ✅ | Implementation In Progress 🚧 | v1.5 Activity Metering ✅
+**Status**: Phase 1 Complete ✅ | Phase 2 Architecture Complete ✅ | Phase 3 & 4 Architectures Complete ✅ | Phase 3 UI Complete ✅ | Implementation In Progress 🚧 | v1.6 Metering + Export + Rate Limit ✅

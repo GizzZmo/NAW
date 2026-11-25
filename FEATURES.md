@@ -13,7 +13,7 @@
 - ✅ Look-ahead scheduler with input validation
 - ✅ Rollback-safe initialization (partial failures clean up resources)
 - ✅ Real master RMS metering
-- ✅ Per-track activity metering (note-triggered, decaying) — intermediate until full independent track DSP routing
+- ✅ Per-track true RMS metering via AnalyserNodes (v1.6)
 
 ### MIDI
 - ✅ Note-On / Note-Off pairing by device/channel/note
@@ -29,7 +29,8 @@
 
 ### Export UI
 - ✅ Working MIDI track download
-- ✅ Audio stems, stereo mixdown, Ableton, Logic, Pro Tools explicitly marked unavailable
+- ✅ Synthesized WAV mixdown export (OfflineAudioContext of prototype oscillators)
+- ✅ Audio stems of neural renders, Ableton, Logic, Pro Tools still marked planned
 
 ### Documentation
 - ✅ `neural-engine/CAPABILITY_STATUS.md` distinguishes stubs from implemented behavior
@@ -61,7 +62,7 @@
 1. **Neural audio models** – DAC, CLAP inference, trained ControlNet, vocoder, Flow Matching, and generative inpainting are not production implementations.
 2. **Audio export** – WAV stems and DAW project export remain unavailable because the app does not produce independent rendered audio buffers.
 3. **Per-track metering** – activity-based meters from note triggers are now shown in the Mixer. Full independent per-track DSP output routing and true RMS metering remains future work.
-4. **API protection** – authentication, rate limiting, and abuse monitoring still required before public deployment.
+4. **API protection** – basic in-memory rate limiting (10/min) and optional `NAW_API_KEY` header check added. Distributed/persistent limiting still recommended for public deploy.
 5. **Autosave** – browser `localStorage` only; no cloud sync or external audio asset persistence.
 6. **MIDI quantization** – note duration uses playhead position; hardware timestamp quantization is future work.
 

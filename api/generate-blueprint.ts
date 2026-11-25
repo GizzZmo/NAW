@@ -29,13 +29,59 @@ const numericOption = (value: unknown, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export default async function handler(req: ApiRequest, res: ApiResponse) {
+// Simple in-memory rate limiter (best-effort; serverless instances are ephemeral).
+// For production use Vercel KV / Upstash Redis.
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
+
+function getClientId(req: ApiRequest & { headers?: Record<string, string | string[] | undefined> }): string {
+  const headers = req.headers ?? {};
+  const forwarded = headers['x-forwarded-for'] ?? headers['X-Forwarded-For'];
+  const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  return (typeof ip === 'string' ? ip.split(',')[0].trim() : 'unknown') || 'unknown';
+}
+
+function checkRateLimit(clientId: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(clientId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(clientId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: RATE_LIMIT_MAX - 1 };
+  }
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return { allowed: false, remaining: 0 };
+  }
+  entry.count += 1;
+  return { allowed: true, remaining: RATE_LIMIT_MAX - entry.count };
+}
+
+export default async function handler(req: ApiRequest & { headers?: Record<string, string | string[] | undefined> }, res: ApiResponse) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed.' });
+  }
+
+  // Optional API key gate (set NAW_API_KEY in env to enable)
+  const requiredKey = process.env.NAW_API_KEY;
+  if (requiredKey) {
+    const provided = req.headers?.['x-api-key'] ?? req.headers?.['X-API-Key'];
+    const key = Array.isArray(provided) ? provided[0] : provided;
+    if (key !== requiredKey) {
+      return res.status(401).json({ error: 'Invalid or missing X-API-Key.' });
+    }
+  }
+
+  const clientId = getClientId(req);
+  const limit = checkRateLimit(clientId);
+  res.setHeader('X-RateLimit-Limit', String(RATE_LIMIT_MAX));
+  res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
+  if (!limit.allowed) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Rate limit exceeded. Try again in a minute.' });
   }
 
   if (!isRecord(req.body)) {

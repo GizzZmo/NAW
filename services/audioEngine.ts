@@ -161,6 +161,51 @@ class AudioEngine {
   /** Per-track activity meters (0-1), decaying over time. Intermediate step toward full DSP routing. */
   private trackMeterLevels = new Map<string, { level: number; lastUpdate: number }>();
 
+  /** True per-track RMS via AnalyserNodes (v1.6). */
+  private trackAnalysers = new Map<string, AnalyserNode>();
+  private analyserBuffer = new Float32Array(256);
+
+  /**
+   * Gets or creates a per-track AnalyserNode connected to the master.
+   * Track gains should connect to this analyser for true RMS.
+   */
+  private getTrackAnalyser(trackId: string): AnalyserNode | null {
+    if (!this.ctx || !this.masterGain) return null;
+    let analyser = this.trackAnalysers.get(trackId);
+    if (!analyser) {
+      analyser = this.ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.connect(this.masterGain);
+      this.trackAnalysers.set(trackId, analyser);
+    }
+    return analyser;
+  }
+
+  /**
+   * Returns true RMS levels (0-1) from per-track AnalyserNodes.
+   * Falls back to activity levels if analysers are not yet created.
+   */
+  getTrueTrackRms(): Record<string, number> {
+    const result: Record<string, number> = {};
+    for (const [id, analyser] of this.trackAnalysers) {
+      analyser.getFloatTimeDomainData(this.analyserBuffer);
+      let sum = 0;
+      for (let i = 0; i < this.analyserBuffer.length; i++) {
+        const v = this.analyserBuffer[i];
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / this.analyserBuffer.length);
+      result[id] = Math.min(1, rms * 4); // scale for visibility
+    }
+    // Merge with activity fallback for tracks without analyser yet
+    const activity = this.getTrackMeterLevels();
+    for (const id of Object.keys(activity)) {
+      if (!(id in result)) result[id] = activity[id];
+    }
+    return result;
+  }
+
   /**
    * Bumps a track's meter based on note activity.
    * Level is set to max(current, velocity*volume) and decays exponentially when queried.
@@ -444,9 +489,16 @@ class AudioEngine {
      // Create per-event gain (velocity + track volume)
      const trackGain = this.ctx.createGain();
      trackGain.gain.value = track.volume * event.velocity;
-     trackGain.connect(this.masterGain);
 
-     // Update per-track activity meter (intermediate until full independent track routing)
+     // Route through per-track analyser for true RMS metering
+     const analyser = this.getTrackAnalyser(track.id);
+     if (analyser) {
+       trackGain.connect(analyser);
+     } else {
+       trackGain.connect(this.masterGain);
+     }
+
+     // Update per-track activity meter (fallback / visual)
      this.bumpTrackMeter(track.id, track.volume * event.velocity);
      
  

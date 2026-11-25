@@ -12,15 +12,19 @@ import { X, Download, FileAudio, Music2, Layers, Info } from 'lucide-react';
 interface ExportModalProps {
   onClose: () => void;
   onExportMidi: () => void;
+  onExportWavMixdown?: () => void;
   trackCount: number;
   bpm: number;
+  isExportingWav?: boolean;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
   onExportMidi,
+  onExportWavMixdown,
   trackCount,
   bpm,
+  isExportingWav = false,
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
     <div className="bg-naw-panel border border-slate-600 rounded-xl shadow-2xl w-[520px] max-w-[calc(100vw-2rem)] overflow-hidden">
@@ -36,7 +40,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
       <div className="p-5 flex flex-col gap-4">
         <div className="text-xs text-slate-400">
-          {trackCount} tracks · {bpm} BPM · NAW 1.4
+          {trackCount} tracks · {bpm} BPM · NAW 1.6
         </div>
 
         <section className="rounded-lg border border-naw-accent/60 bg-naw-accent/5 p-4 flex flex-col gap-3">
@@ -53,19 +57,35 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </button>
         </section>
 
+        <section className="rounded-lg border border-emerald-700/50 bg-emerald-900/10 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <FileAudio size={20} className="text-emerald-400" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-white">Synthesized WAV mixdown</div>
+              <div className="text-xs text-slate-400">Offline render of current prototype oscillators (not neural audio)</div>
+            </div>
+            <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Available</span>
+          </div>
+          <button
+            onClick={onExportWavMixdown}
+            disabled={!onExportWavMixdown || isExportingWav}
+            className="w-full px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded flex items-center justify-center gap-2 transition"
+          >
+            <Download size={14} /> {isExportingWav ? 'Rendering…' : 'Export WAV mixdown'}
+          </button>
+        </section>
+
         <section className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
             <Info size={18} className="text-amber-400 mt-0.5" />
             <div>
-              <div className="text-sm font-semibold text-slate-200">Audio export is not available yet</div>
+              <div className="text-sm font-semibold text-slate-200">DAW project export</div>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                NAW currently generates symbolic note patterns. It does not yet render independent audio stems or a stereo master, so WAV export would create misleading or empty files.
+                Ableton / Logic / Pro Tools project formats remain planned. WAV stems of independent neural renders require real audio models.
               </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
-            <div className="rounded bg-slate-900/70 p-2 flex items-center gap-2"><FileAudio size={14} /> WAV stems · planned</div>
-            <div className="rounded bg-slate-900/70 p-2 flex items-center gap-2"><FileAudio size={14} /> Stereo mixdown · planned</div>
             <div className="rounded bg-slate-900/70 p-2 flex items-center gap-2"><Layers size={14} /> Ableton project · planned</div>
             <div className="rounded bg-slate-900/70 p-2 flex items-center gap-2"><Layers size={14} /> Logic / Pro Tools · planned</div>
           </div>
