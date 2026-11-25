@@ -13,7 +13,7 @@
 - ✅ Look-ahead scheduler with input validation
 - ✅ Rollback-safe initialization (partial failures clean up resources)
 - ✅ Real master RMS metering
-- ✅ Per-track meters intentionally not simulated
+- ✅ Per-track activity metering (note-triggered, decaying) — intermediate until full independent track DSP routing
 
 ### MIDI
 - ✅ Note-On / Note-Off pairing by device/channel/note
@@ -60,7 +60,7 @@
 
 1. **Neural audio models** – DAC, CLAP inference, trained ControlNet, vocoder, Flow Matching, and generative inpainting are not production implementations.
 2. **Audio export** – WAV stems and DAW project export remain unavailable because the app does not produce independent rendered audio buffers.
-3. **Per-track metering** – only master RMS is connected until individual track outputs are routed.
+3. **Per-track metering** – activity-based meters from note triggers are now shown in the Mixer. Full independent per-track DSP output routing and true RMS metering remains future work.
 4. **API protection** – authentication, rate limiting, and abuse monitoring still required before public deployment.
 5. **Autosave** – browser `localStorage` only; no cloud sync or external audio asset persistence.
 6. **MIDI quantization** – note duration uses playhead position; hardware timestamp quantization is future work.

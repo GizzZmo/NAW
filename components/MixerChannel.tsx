@@ -6,27 +6,35 @@ interface MixerChannelProps {
   track: Track;
   onUpdate: (id: string, updates: Partial<Track>) => void;
   isPlaying: boolean;
+  /** Current activity level 0-1 for this track (from AudioEngine activity metering). */
+  meterLevel?: number;
 }
 
-export const MixerChannel: React.FC<MixerChannelProps> = ({ track, onUpdate }) => {
+export const MixerChannel: React.FC<MixerChannelProps> = ({ track, onUpdate, isPlaying, meterLevel = 0 }) => {
+  const displayLevel = isPlaying ? Math.min(1, Math.max(0, meterLevel)) : 0;
+
   return (
     <div className="flex flex-col items-center w-24 bg-naw-surface border-r border-slate-700 py-4 h-full relative">
       <div className="text-xs font-mono font-bold text-slate-400 mb-2 truncate px-2 w-full text-center">
         {track.name}
       </div>
 
-      {/* Per-track metering is intentionally not simulated. The current DSP
-          graph exposes a master meter only; showing random channel levels is
-          misleading until independent track outputs are routed. */}
+      {/* Per-track activity meter (note-triggered, decaying). Full independent DSP routing is still future work. */}
       <div
         className="w-4 h-48 bg-slate-900 rounded-full overflow-hidden relative mb-4 border border-slate-600"
-        role="img"
-        aria-label={`${track.name} level meter unavailable: per-track DSP routing is not connected`}
-        title="Per-track metering will be enabled when the audio graph exposes individual track outputs."
+        role="meter"
+        aria-label={`${track.name} activity meter`}
+        aria-valuenow={Math.round(displayLevel * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        title="Activity-based meter from note triggers (full per-track DSP metering pending)"
       >
         <div
-          className="absolute bottom-0 left-0 w-full h-0"
-          style={{ backgroundColor: STEM_COLORS[track.type] }}
+          className="absolute bottom-0 left-0 w-full transition-all duration-75"
+          style={{
+            height: `${displayLevel * 100}%`,
+            backgroundColor: STEM_COLORS[track.type],
+          }}
         />
         {/* Graticule */}
         <div className="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none opacity-30">

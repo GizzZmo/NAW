@@ -5,7 +5,7 @@
 **A Production-Grade AI Music Creation Environment**  
 Bridging generative AI and professional music production workflows
 
-[![Version](https://img.shields.io/badge/version-1.4.0-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 
@@ -129,7 +129,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md), [FEATURES.md](FEATURES.md), [neural-engi
 
 ---
 
-## Project Status (v1.4)
+## Project Status (v1.5)
 
 | Component | Status |
 |-----------|--------|
@@ -141,7 +141,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md), [FEATURES.md](FEATURES.md), [neural-engi
 | Piano Roll / Timeline / Mixer | ✅ Working |
 | Real neural audio models | 🚧 Stubbed |
 | Audio / DAW export (WAV, Ableton, Logic) | 🚧 Unavailable (UI says so) |
-| Per-track metering | 🚧 Planned |
+| Per-track metering | ✅ Activity-based (note-triggered) |
 | Auth / rate limiting on API | 🚧 Required before public deploy |
 
 ---
