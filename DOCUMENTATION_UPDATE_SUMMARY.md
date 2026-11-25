@@ -1,5 +1,19 @@
 # Documentation and Implementation Update Summary
 
+**Date**: November 25, 2026 (v1.6 docs refresh)  
+**Previous**: December 17, 2025  
+**Status**: ✅ Updated for v1.6
+
+## v1.6 Documentation Refresh (November 25, 2026)
+
+- **README.md**: Removed duplicate status table; updated current-behavior text and Key Features to v1.6 (true RMS, WAV mixdown, rate limiting).
+- **FEATURES.md**: Rewritten for v1.6; limitations and planned items now match implementation.
+- **neural-engine/CAPABILITY_STATUS.md**: Product-behavior note updated; table reflects true RMS, WAV export, and API protection.
+- **API.md**: Documented server-side `/api/generate-blueprint`, rate limiting, optional `NAW_API_KEY`, `getTrueTrackRms`, `getTrackMeterLevels`, and `OfflineRenderer`.
+- **ROADMAP.md**: Changelog entry for the docs refresh.
+
+---
+
 **Date**: December 17, 2025  
 **PR**: Neural Engine Documentation and Roadmap Continuation  
 **Status**: ✅ Complete

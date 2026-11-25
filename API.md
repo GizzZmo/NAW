@@ -16,20 +16,47 @@ This document describes the public API of NAW's service layer modules. These ser
 
 ## Gemini Service
 
-**Module**: `services/geminiService.ts`  
+**Module**: `services/geminiService.ts` (client) + `api/generate-blueprint.ts` (server)  
 **Purpose**: AI-powered semantic planning (Stage 1 of hybrid architecture)
 
-### Functions
+As of v1.4 the Gemini call is **server-side**. The client never receives the `GEMINI_API_KEY`.
 
-#### `generateSongBlueprint`
+### Endpoint: `POST /api/generate-blueprint`
 
-Generates a musical blueprint (2-bar loop patterns for 4 stems) using Gemini 2.5 Flash API.
+**Request body:**
+```json
+{
+  "prompt": "Uplifting house track with deep bass",
+  "bpm": 128,
+  "options": {
+    "styleAdapter": "Techno",
+    "styleStrength": 0.7,
+    "temperature": 0.8,
+    "audioRefName": "optional-reference.wav"
+  }
+}
+```
+
+**Rate limiting (v1.6):** 10 requests per minute per client (in-memory, best-effort on serverless).  
+**Optional auth:** Set `NAW_API_KEY` in the environment and send `X-API-Key` header.  
+**Response headers:** `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After` (on 429).
+
+**Error responses:**
+- `400` – invalid prompt or BPM
+- `401` – missing/invalid API key (when `NAW_API_KEY` is set)
+- `429` – rate limit exceeded
+- `500` – missing `GEMINI_API_KEY` or provider error
+
+### Client function: `generateSongBlueprint`
+
+Generates a musical blueprint (2-bar loop patterns for 4 stems) via the server endpoint.
 
 **Signature:**
 ```typescript
 async function generateSongBlueprint(
   prompt: string, 
-  bpm: number
+  bpm: number,
+  options?: GenerationOptions
 ): Promise<SongBlueprint>
 ```
 
@@ -76,12 +103,14 @@ console.log(blueprint.stems[0].pattern[0]);
 ```
 
 **Error Handling:**
-- **Missing API Key**: Throws `Error("API Key missing")`
+- **Missing API Key**: Server returns 500 if `GEMINI_API_KEY` is unset
 - **Network/API Failure**: Returns fallback pattern (basic 4/4 drums + bass)
 - **Invalid JSON**: Attempts cleanup, falls back if parsing fails
+- **Rate limit**: 429 with `Retry-After` header
 
 **Environment Variables:**
-- `VITE_GEMINI_API_KEY` or `API_KEY`: Required Gemini API key
+- `GEMINI_API_KEY`: Required on the server (never exposed to the browser)
+- `NAW_API_KEY`: Optional. When set, clients must send `X-API-Key` header
 
 ---
 
@@ -210,6 +239,34 @@ console.log(position); // 8.5 (bar 8, beat 3)
 
 ---
 
+#### `getTrueTrackRms` (v1.6)
+
+Returns true RMS levels (0–1) from per-track AnalyserNodes.
+
+**Signature:**
+```typescript
+getTrueTrackRms(): Record<string, number>
+```
+
+**Example:**
+```typescript
+const levels = audioEngine.getTrueTrackRms();
+// { t1: 0.42, t2: 0.18, ... }
+```
+
+---
+
+#### `getTrackMeterLevels` (v1.5, fallback)
+
+Returns decaying activity levels from note triggers. Used as fallback when analysers are not yet created.
+
+**Signature:**
+```typescript
+getTrackMeterLevels(): Record<string, number>
+```
+
+---
+
 ### Properties
 
 #### `isPlaying`
@@ -242,6 +299,38 @@ These methods are implementation details and should not be called directly:
 - `playClipEvents()` - Triggers events from a clip
 - `triggerEvent()` - Routes event to appropriate synthesis function
 - `playKick()`, `playSnare()`, `playHiHat()`, etc. - Audio synthesis
+- `getTrackAnalyser()` - Creates/retrieves per-track AnalyserNode
+- `bumpTrackMeter()` - Updates activity-based meter
+
+---
+
+## Offline Renderer (v1.6)
+
+**Module**: `services/audio/OfflineRenderer.ts`  
+**Purpose**: Render current symbolic patterns to WAV using OfflineAudioContext
+
+### Functions
+
+#### `renderProjectToWav`
+
+```typescript
+async function renderProjectToWav(
+  tracks: Track[],
+  bpm: number,
+  totalBars: number,
+  sampleRate?: number
+): Promise<Blob>
+```
+
+Renders prototype oscillator synthesis (not neural audio) to a WAV Blob.
+
+#### `downloadBlob`
+
+```typescript
+function downloadBlob(blob: Blob, filename: string): void
+```
+
+Triggers a browser download of the given Blob.
 
 ---
 
@@ -324,7 +413,9 @@ For complete type definitions, see:
 
 | Code | Description | Recovery |
 |------|-------------|----------|
-| `API_KEY_MISSING` | No API key in environment | Set `VITE_GEMINI_API_KEY` |
+| `API_KEY_MISSING` | No `GEMINI_API_KEY` on server | Set environment variable on the server |
+| `RATE_LIMITED` | 10 requests/minute exceeded | Wait for `Retry-After` |
+| `UNAUTHORIZED` | `NAW_API_KEY` set but header missing/invalid | Send `X-API-Key` header |
 | `JSON_PARSE_ERROR` | Invalid JSON response | Uses fallback pattern |
 | `NETWORK_ERROR` | API request failed | Uses fallback pattern |
 
@@ -405,7 +496,10 @@ audioEngine.setTracks(newTracks);
 
 ## Version History
 
-- **v1.1.0** (Current): Gemini integration, basic playback
+- **v1.6.0**: True per-track RMS metering, synthesized WAV mixdown export, API rate limiting + optional key
+- **v1.5.0**: Per-track activity metering
+- **v1.4.0**: Server-side Gemini, stabilization review
+- **v1.1.0**: Gemini integration, basic playback
 - **v1.0.0**: Initial prototype with static patterns
 
 ---

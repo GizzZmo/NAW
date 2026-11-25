@@ -31,24 +31,26 @@ Bridging generative AI and professional music production workflows
 
 NAW is a browser-based Digital Audio Workstation that combines **stem-level AI music generation** with professional production tools.
 
-**Current (v1.4) behavior:** NAW generates **editable symbolic note patterns** (MIDI-style events) via Google Gemini. It does **not** yet generate high-fidelity audio waveforms. Real neural audio models (DAC, CLAP, Flow Matching, vocoders) remain architectural stubs.
+**Current (v1.6) behavior:** NAW generates **editable symbolic note patterns** (MIDI-style events) via Google Gemini. It does **not** yet generate high-fidelity audio waveforms. Real neural audio models (DAC, CLAP, Flow Matching, vocoders) remain architectural stubs with no pretrained weights loaded.
 
 The architecture is designed so those models can be plugged in later without rewriting the UI or scheduling layer.
 
 ---
 
-## Key Features (v1.4)
+## Key Features (v1.6)
 
 ### Symbolic Generation (Gemini)
 - Server-side `/api/generate-blueprint` endpoint (Gemini key never shipped to the browser)
 - Style Adapters: Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop
 - Style Strength and Temperature controls
 - Per-clip regenerate
+- Basic rate limiting (10/min) + optional `NAW_API_KEY` header check
 
 ### AudioWorklet Engine
 - Dedicated DSP thread with look-ahead scheduler
 - Rollback-safe initialization
-- Real master RMS metering (per-track meters not yet available)
+- Real master RMS metering
+- Per-track true RMS metering via AnalyserNodes
 - Initializes on first user gesture
 
 ### MIDI
@@ -60,11 +62,12 @@ The architecture is designed so those models can be plugged in later without rew
 ### Project & Export
 - Debounced local autosave + recovery on startup
 - Versioned project envelopes (legacy JSON still loads)
-- Export modal: working MIDI download; audio/Ableton/Logic/Pro Tools marked unavailable
+- Export modal: working MIDI download + synthesized WAV mixdown (OfflineAudioContext of prototype oscillators)
+- Ableton / Logic / Pro Tools project formats still planned
 
 ### Arrangement & Editing
 - Multi-track timeline, piano roll, spectrogram views
-- Mixer with volume, solo, mute
+- Mixer with volume, solo, mute and live per-track RMS meters
 - Prompt Lane for section-level style changes
 
 ---
@@ -83,7 +86,8 @@ npm run dev:vercel
 npm run dev
 ```
 
-Create a `.env` (or Vercel environment) with `GEMINI_API_KEY` for the server. The key is never sent to the browser.
+Create a `.env` (or Vercel environment) with `GEMINI_API_KEY` for the server. The key is never sent to the browser.  
+Optionally set `NAW_API_KEY` to require an `X-API-Key` header on generation requests.
 
 Open the local URL. Click **Play** or **Generate** once to initialize AudioWorklet and MIDI.
 
@@ -145,19 +149,6 @@ See [ARCHITECTURE.md](ARCHITECTURE.md), [FEATURES.md](FEATURES.md), [neural-engi
 | Real neural audio models | 🚧 Architecture + stubs (no pretrained weights) |
 | DAW project export (Ableton, Logic, Pro Tools) | 🚧 Planned |
 | Auth / distributed rate limiting | 🚧 Basic in-memory; production needs Redis/KV |
-
-| Component | Status |
-|-----------|--------|
-| Symbolic Planner (Gemini, server-side) | ✅ Working |
-| Style Adapters & Controls | ✅ Working |
-| AudioWorklet Engine (synthesis + master meter) | ✅ Working |
-| MIDI Input / Recording / Export | ✅ Working |
-| Autosave + versioned projects | ✅ Working |
-| Piano Roll / Timeline / Mixer | ✅ Working |
-| Real neural audio models | 🚧 Stubbed |
-| Audio / DAW export (WAV, Ableton, Logic) | 🚧 Unavailable (UI says so) |
-| Per-track metering | ✅ Activity-based (note-triggered) |
-| Auth / rate limiting on API | 🚧 Required before public deploy |
 
 ---
 
