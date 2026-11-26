@@ -353,7 +353,15 @@ class AudioEngine {
     // Schedule first event slightly in the future to prevent click
     this.nextNoteTime = this.ctx.currentTime + 0.05;
     
-    this.scheduler();
+    // Prefer worklet scheduler
+    if (audioWorkletEngine.initialized && audioWorkletEngine.scheduler) {
+      const stepSecs = 60 / this.bpm / 4;
+      audioWorkletEngine.scheduleBeatSequence(this.nextNoteTime, stepSecs, 64, (t, step) => {
+        this.scheduleNote(this.current16thNote + step, t);
+      });
+    } else {
+      this.scheduler();
+    }
   }
 
   /**
@@ -502,27 +510,30 @@ class AudioEngine {
      this.bumpTrackMeter(track.id, track.volume * event.velocity);
      
  
-    // Tighter AudioWorklet integration: send real note data when worklet is ready
-    if (audioWorkletEngine.initialized && track.type !== StemType.DRUMS) {
-      const freq = getFreq(event.note);
+    // Worklet takes over all synthesis when ready
+    if (audioWorkletEngine.initialized) {
+      let freq = 0;
+      if (track.type === StemType.DRUMS) {
+        const t = String(event.note).toUpperCase();
+        freq = t === 'KICK' ? 60 : (t === 'SNARE' || t === 'CLAP') ? 180 : (t === 'CHAT' || t === 'OHAT') ? 800 : 200;
+      } else {
+        freq = getFreq(event.note);
+      }
       if (freq > 0) {
-        audioWorkletEngine.sendDspMessage({
-          type: 'noteOn',
-          freq,
-          vel: Math.min(1, (track.volume ?? 1) * event.velocity),
-        });
-        // Schedule a noteOff after the duration
-        const durationSecs = (event.duration || 1) * (60 / this.bpm / 4);
+        const vel = Math.min(1, (track.volume ?? 1) * (event.velocity ?? 0.8));
+        audioWorkletEngine.sendDspMessage({ type: 'noteOn', freq, vel });
+        audioWorkletEngine.setGain(track.volume ?? 1);
+        audioWorkletEngine.setPan(0);
+        const durationSecs = Math.max(0.05, (event.duration || 1) * (60 / this.bpm / 4));
         audioWorkletEngine.scheduleEvent({
           time: time + durationSecs,
-          callback: () => {
-            audioWorkletEngine.sendDspMessage({ type: 'noteOff', freq });
-          },
+          callback: () => audioWorkletEngine.sendDspMessage({ type: 'noteOff', freq }),
         });
       }
+      return; // skip main-thread oscillators
     }
 
-    // Route to stem-specific synthesis
+    // Route to stem-specific synthesis (fallback)
      if (track.type === StemType.DRUMS) {
         const type = String(event.note).toUpperCase();
         if (type === 'KICK') this.playKick(time, trackGain);
