@@ -91,6 +91,7 @@ export default async function handler(req: ApiRequest & { headers?: Record<strin
   const prompt = typeof req.body.prompt === 'string' ? req.body.prompt.trim() : '';
   const bpm = Number(req.body.bpm);
   const options = isRecord(req.body.options) ? req.body.options : {};
+  const agent = isRecord(req.body.agent) ? req.body.agent : {};
 
   if (!prompt || prompt.length > 2000) {
     return res.status(400).json({ error: 'Prompt is required and must be 2,000 characters or fewer.' });
@@ -99,9 +100,23 @@ export default async function handler(req: ApiRequest & { headers?: Record<strin
     return res.status(400).json({ error: 'Tempo must be between 40 and 240 BPM.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const provider = typeof agent.provider === 'string' ? agent.provider : 'gemini';
+  const userKey = typeof agent.apiKey === 'string' ? agent.apiKey.trim() : '';
+  const modelOverride = typeof agent.modelOverride === 'string' ? agent.modelOverride.trim() : '';
+
+  const envMap: Record<string, string | undefined> = {
+    gemini: process.env.GEMINI_API_KEY,
+    openai: process.env.OPENAI_API_KEY,
+    grok: process.env.XAI_API_KEY,
+    anthropic: process.env.ANTHROPIC_API_KEY,
+    openrouter: process.env.OPENROUTER_API_KEY,
+  };
+
+  const apiKey = userKey || envMap[provider] || '';
   if (!apiKey) {
-    return res.status(500).json({ error: 'Server is missing GEMINI_API_KEY.' });
+    return res.status(400).json({
+      error: `No API key for provider "${provider}". Enter one in the Agent settings or set the matching env var on the server.`,
+    });
   }
 
   const genOptions: GenerationOptions = {
@@ -111,51 +126,110 @@ export default async function handler(req: ApiRequest & { headers?: Record<strin
     audioRefName: typeof options.audioRefName === 'string' ? options.audioRefName.slice(0, 120) : undefined,
   };
 
+  const systemPrompt = `You are a music composition planner for a stem-based DAW. Generate a 32-step (2-bar) symbolic pattern for drums, bass, vocals, and other. BPM context: ${bpm}. Style: ${genOptions.styleAdapter ?? 'general'}. Prompt: ${prompt}. Respond with valid JSON only matching the schema: { "title": string, "suggestedBpm": number, "stems": [ { "type": string, "description": string, "pattern": [ { "step": number, "note": string, "duration": number, "velocity": number } ] } ] }`;
+
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `You are a music composition planner for a stem-based DAW. Generate a 32-step (2-bar) symbolic pattern for drums, bass, vocals, and other. BPM context: ${bpm}. Style: ${genOptions.styleAdapter ?? 'general'}. Prompt: ${prompt}`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            suggestedBpm: { type: Type.NUMBER },
-            stems: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  type: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  pattern: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        step: { type: Type.NUMBER },
-                        note: { type: Type.STRING },
-                        duration: { type: Type.NUMBER },
-                        velocity: { type: Type.NUMBER },
+    let text = '';
+
+    if (provider === 'gemini') {
+      const ai = new GoogleGenAI({ apiKey });
+      const result = await ai.models.generateContent({
+        model: modelOverride || 'gemini-2.5-flash',
+        contents: systemPrompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              suggestedBpm: { type: Type.NUMBER },
+              stems: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    type: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    pattern: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          step: { type: Type.NUMBER },
+                          note: { type: Type.STRING },
+                          duration: { type: Type.NUMBER },
+                          velocity: { type: Type.NUMBER },
+                        },
+                        required: ['step', 'note', 'duration', 'velocity'],
                       },
-                      required: ['step', 'note', 'duration', 'velocity'],
                     },
                   },
+                  required: ['type', 'description', 'pattern'],
                 },
-                required: ['type', 'description', 'pattern'],
               },
             },
+            required: ['title', 'suggestedBpm', 'stems'],
           },
-          required: ['title', 'suggestedBpm', 'stems'],
         },
-      },
-    });
+      });
+      text = result.text ?? '';
+    } else if (provider === 'anthropic') {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: modelOverride || 'claude-sonnet-4-20250514',
+          max_tokens: 2048,
+          messages: [{ role: 'user', content: systemPrompt }],
+        }),
+      });
+      if (!resp.ok) throw new Error(`Anthropic error ${resp.status}`);
+      const data = await resp.json() as { content?: { text?: string }[] };
+      text = data.content?.[0]?.text ?? '';
+    } else {
+      // OpenAI-compatible: openai, grok, openrouter
+      const baseUrls: Record<string, string> = {
+        openai: 'https://api.openai.com/v1',
+        grok: 'https://api.x.ai/v1',
+        openrouter: 'https://openrouter.ai/api/v1',
+      };
+      const models: Record<string, string> = {
+        openai: 'gpt-4o-mini',
+        grok: 'grok-3',
+        openrouter: 'google/gemini-2.5-flash',
+      };
+      const base = baseUrls[provider] || 'https://api.openai.com/v1';
+      const model = modelOverride || models[provider] || 'gpt-4o-mini';
 
-    const text = result.text;
+      const resp = await fetch(`${base}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: systemPrompt }],
+          response_format: { type: 'json_object' },
+          temperature: genOptions.temperature,
+        }),
+      });
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        throw new Error(`${provider} error ${resp.status}: ${errText.slice(0, 200)}`);
+      }
+      const data = await resp.json() as { choices?: { message?: { content?: string } }[] };
+      text = data.choices?.[0]?.message?.content ?? '';
+    }
+
     if (!text) throw new Error('The model returned an empty response.');
-    const blueprint: unknown = JSON.parse(text);
+    // Strip markdown fences if present
+    const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const blueprint: unknown = JSON.parse(cleaned);
     if (!isRecord(blueprint) || !Array.isArray(blueprint.stems)) {
       throw new Error('The model returned an invalid blueprint.');
     }

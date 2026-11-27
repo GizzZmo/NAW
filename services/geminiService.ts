@@ -25,11 +25,15 @@ export interface SongBlueprint {
   stems: BlueprintStem[];
 }
 
+import type { AgentSettings } from './agentSettings';
+
 export interface BlueprintOptions {
   styleAdapter?: string;
   styleStrength?: number;
   temperature?: number;
   audioRefName?: string;
+  /** Selected provider and user-supplied key. */
+  agent?: Pick<AgentSettings, 'provider' | 'apiKey' | 'modelOverride'>;
 }
 
 /** Generate a symbolic musical blueprint through the protected server API. */
@@ -49,7 +53,12 @@ export const generateSongBlueprint = async (
   const response = await fetch('/api/generate-blueprint', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: cleanPrompt, bpm, options }),
+    body: JSON.stringify({
+      prompt: cleanPrompt,
+      bpm,
+      options,
+      agent: options.agent,
+    }),
     signal,
   });
 

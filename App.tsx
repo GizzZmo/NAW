@@ -6,6 +6,7 @@ import {
 import { INITIAL_TRACKS, TOTAL_BARS, PIXELS_PER_BAR, STEM_COLORS, TRACK_HEIGHT } from './constants';
 import { PRESETS } from './data/presets';
 import { generateSongBlueprint, type SongBlueprint } from './services/geminiService';
+import { loadAgentSettings, saveAgentSettings, PROVIDERS, type ProviderId, type AgentSettings } from './services/agentSettings';
 import { audioEngine } from './services/audioEngine';
 import { audioWorkletEngine } from './services/audio/AudioWorkletEngine';
 import { midiService } from './services/midi/MidiService';
@@ -98,6 +99,8 @@ const App: React.FC = () => {
   const [isExportingStems, setIsExportingStems] = useState(false);
   const [musicGenStatus, setMusicGenStatus] = useState<string | null>(null);
   const [isMusicGenRunning, setIsMusicGenRunning] = useState(false);
+  const [agentSettings, setAgentSettings] = useState<AgentSettings>(() => loadAgentSettings());
+  const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
   const [workletReady, setWorkletReady] = useState(false);
@@ -253,7 +256,12 @@ const App: React.FC = () => {
         styleAdapter,
         styleStrength,
         temperature,
-        audioRefName: audioRefFile?.name
+        audioRefName: audioRefFile?.name,
+        agent: {
+          provider: agentSettings.provider,
+          apiKey: agentSettings.apiKey,
+          modelOverride: agentSettings.modelOverride,
+        },
       });
     } catch (error) {
       setProject(prev => ({ ...prev, generationStage: 'IDLE', generationProgress: 0 }));
@@ -642,8 +650,66 @@ const App: React.FC = () => {
               {project.generationStage === 'IDLE' ? 'Generate' : project.generationStage}
             </button>
           </div>
-          <div className="text-xs text-slate-500">
-            Style: {styleAdapter} · Strength {styleStrength}% · Temp {temperature}
+          <div className="rounded border border-slate-600 p-3 bg-slate-900/40">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs font-semibold text-slate-300">AI Agent</div>
+              <button
+                type="button"
+                onClick={() => setShowAgentPanel(v => !v)}
+                className="text-[11px] text-slate-400 hover:text-white"
+              >
+                {showAgentPanel ? 'Hide' : 'Settings'}
+              </button>
+            </div>
+            <div className="text-[11px] text-slate-500 mb-2">
+              {PROVIDERS.find(p => p.id === agentSettings.provider)?.label ?? 'Gemini'}
+              {agentSettings.apiKey ? ' · key set' : ' · no key'}
+            </div>
+            {showAgentPanel && (
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] text-slate-400">Provider</label>
+                <select
+                  value={agentSettings.provider}
+                  onChange={e => {
+                    const next = { ...agentSettings, provider: e.target.value as ProviderId };
+                    setAgentSettings(next);
+                    saveAgentSettings(next);
+                  }}
+                  className="w-full bg-slate-800 border border-slate-600 rounded text-xs p-1.5 text-white"
+                >
+                  {PROVIDERS.map(p => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
+                </select>
+                <label className="text-[11px] text-slate-400">API key (stored locally)</label>
+                <input
+                  type="password"
+                  value={agentSettings.apiKey}
+                  placeholder={PROVIDERS.find(p => p.id === agentSettings.provider)?.keyPlaceholder ?? 'API key'}
+                  onChange={e => {
+                    const next = { ...agentSettings, apiKey: e.target.value };
+                    setAgentSettings(next);
+                    saveAgentSettings(next);
+                  }}
+                  className="w-full bg-slate-800 border border-slate-600 rounded text-xs p-1.5 text-white"
+                />
+                <label className="text-[11px] text-slate-400">Model override (optional)</label>
+                <input
+                  type="text"
+                  value={agentSettings.modelOverride ?? ''}
+                  placeholder="leave blank for default"
+                  onChange={e => {
+                    const next = { ...agentSettings, modelOverride: e.target.value || undefined };
+                    setAgentSettings(next);
+                    saveAgentSettings(next);
+                  }}
+                  className="w-full bg-slate-800 border border-slate-600 rounded text-xs p-1.5 text-white"
+                />
+                <p className="text-[10px] text-slate-500 leading-snug">
+                  Key is kept in this browser only and sent with each generate request. Server env vars are used as fallback if empty.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="rounded border border-slate-600 p-3 bg-slate-900/40">
