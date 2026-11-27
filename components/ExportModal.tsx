@@ -13,18 +13,22 @@ interface ExportModalProps {
   onClose: () => void;
   onExportMidi: () => void;
   onExportWavMixdown?: () => void;
+  onExportWavStems?: () => void;
   trackCount: number;
   bpm: number;
   isExportingWav?: boolean;
+  isExportingStems?: boolean;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
   onExportMidi,
   onExportWavMixdown,
+  onExportWavStems,
   trackCount,
   bpm,
   isExportingWav = false,
+  isExportingStems = false,
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
     <div className="bg-naw-panel border border-slate-600 rounded-xl shadow-2xl w-[520px] max-w-[calc(100vw-2rem)] overflow-hidden">
@@ -72,6 +76,24 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             className="w-full px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded flex items-center justify-center gap-2 transition"
           >
             <Download size={14} /> {isExportingWav ? 'Rendering…' : 'Export WAV mixdown'}
+          </button>
+        </section>
+
+        <section className="rounded-lg border border-sky-700/50 bg-sky-900/10 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <Layers size={20} className="text-sky-400" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-white">Synthesized WAV stems</div>
+              <div className="text-xs text-slate-400">One WAV per non-muted track of prototype oscillators (not neural)</div>
+            </div>
+            <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Available</span>
+          </div>
+          <button
+            onClick={onExportWavStems}
+            disabled={!onExportWavStems || isExportingStems}
+            className="w-full px-4 py-2 text-sm bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold rounded flex items-center justify-center gap-2 transition"
+          >
+            <Download size={14} /> {isExportingStems ? 'Rendering stems…' : 'Export WAV stems'}
           </button>
         </section>
 

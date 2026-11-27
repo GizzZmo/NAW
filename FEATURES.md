@@ -32,6 +32,7 @@
 ### Export UI
 - ✅ Working MIDI track download
 - ✅ Synthesized WAV mixdown export (OfflineAudioContext of prototype oscillators)
+- ✅ Synthesized WAV stems export (one WAV per non-muted track of prototype oscillators)
 - ✅ Audio stems of neural renders, Ableton, Logic, Pro Tools still marked planned
 
 ### Documentation

@@ -59,6 +59,66 @@ function writeWav(samples: Float32Array, sampleRate: number): Blob {
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
+export async function renderTrackToWav(
+  track: Track,
+  bpm: number,
+  totalBars: number,
+  sampleRate = 44100,
+): Promise<Blob> {
+  const secondsPerBar = (60 / bpm) * 4;
+  const duration = totalBars * secondsPerBar;
+  const length = Math.ceil(duration * sampleRate);
+
+  const offline = new OfflineAudioContext(1, length, sampleRate);
+  const master = offline.createGain();
+  master.gain.value = 0.8;
+  master.connect(offline.destination);
+
+  const stepDuration = 60 / bpm / 4;
+
+  if (!track.muted) {
+    for (const clip of track.clips || []) {
+      const clipStartTime = clip.startBar * secondsPerBar;
+      for (const event of clip.events || []) {
+        const t = clipStartTime + event.step * stepDuration;
+        if (t >= duration) continue;
+        const freq = getFreq(event.note);
+        if (freq <= 0) continue;
+
+        const osc = offline.createOscillator();
+        const gain = offline.createGain();
+        osc.frequency.value = freq;
+        osc.type = track.type === StemType.DRUMS ? 'sine' : track.type === StemType.BASS ? 'sawtooth' : 'triangle';
+        gain.gain.value = (track.volume ?? 1) * (event.velocity ?? 0.7) * 0.4;
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(t);
+        osc.stop(t + (event.duration || 1) * stepDuration);
+      }
+    }
+  }
+
+  const rendered = await offline.startRendering();
+  const channel = rendered.getChannelData(0);
+  return writeWav(channel, sampleRate);
+}
+
+export async function exportWavStems(
+  tracks: Track[],
+  bpm: number,
+  totalBars: number,
+  sampleRate = 44100,
+): Promise<void> {
+  for (const track of tracks) {
+    if (track.muted) continue;
+    const blob = await renderTrackToWav(track, bpm, totalBars, sampleRate);
+    const safeName = (track.name || track.id || 'track').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    downloadBlob(blob, `naw-stem-${safeName}-${Date.now()}.wav`);
+    // Small delay so browsers don't block multiple downloads
+    await new Promise(r => setTimeout(r, 300));
+  }
+}
+
 export async function renderProjectToWav(
   tracks: Track[],
   bpm: number,
