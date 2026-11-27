@@ -5,14 +5,15 @@ This document distinguishes implemented application behavior from planned model 
 | Component | NAW 1.6 status | Notes |
 |---|---|---|
 | Gemini semantic planner | Integrated symbolic generation | Calls the server-side Gemini endpoint and returns structured note patterns. It does not generate audio waveforms. |
-| DAC codec | Architecture + stub | No pretrained DAC checkpoint or production encoder/decoder is loaded. Interface ready for future ONNX/WASM. |
+| DAC codec | Architecture + stub (+ ONNX scaffold) | No pretrained DAC checkpoint is shipped. Optional `encoderOnnxUrl` / `decoderOnnxUrl` on `DACConfig` will attempt to load a real model via `onnxruntime-web` (optional dependency). Falls back to stub if unavailable. |
 | Acoustic renderer | Architecture + stub | No trained Flow Matching / diffusion model is loaded. |
 | Vocoder | Architecture + stub | No verified pretrained vocoder inference pipeline is connected. |
 | CLAP conditioning | Architecture + stub | Reference filename is descriptive text context only; uploaded audio is not embedded. |
 | ControlNet adapters | Prompt-level controls | Style selections modify prompt context; trained adapters are not loaded. |
 | Spectrogram inpainting | UI + stub | The UI/workflow is not connected to a trained generative inpainting model. |
 | Per-track metering | True RMS (v1.6) | Per-track AnalyserNodes provide real RMS from the live synthesis graph. |
-| Audio export | Synthesized WAV mixdown (v1.6) | OfflineAudioContext render of prototype oscillators to WAV. Neural stem export still pending. |
+| Audio export | Synthesized WAV mixdown + stems (v1.6.1) | OfflineAudioContext render of prototype oscillators to WAV (mixdown and per-track stems). Neural stem export still pending. |
+| ONNX inference path | Scaffold ready | `neural-engine/inference/onnxScaffold.ts` + optional `onnxruntime-web`. Callers supply a `.onnx` URL. No model weights are shipped. |
 | API protection | Rate limiting + optional key (v1.6) | In-memory 10 req/min per client + optional `NAW_API_KEY` header check. Ephemeral on serverless. |
 
 ## Product behavior

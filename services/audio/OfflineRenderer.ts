@@ -6,7 +6,7 @@
  * This enables real WAV export of the prototype synthesis (not neural audio).
  */
 
-import { StemType, Track, NoteEvent } from '../types';
+import { StemType, Track, NoteEvent } from '../../types';
 
 const NOTE_TO_FREQ: Record<string, number> = {
   'C': 16.35, 'C#': 17.32, 'Db': 17.32, 'D': 18.35, 'D#': 19.45, 'Eb': 19.45, 'E': 20.60,

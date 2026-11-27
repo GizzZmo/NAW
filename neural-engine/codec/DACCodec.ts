@@ -36,6 +36,18 @@ export interface DACConfig {
   
   /** Number of semantic codebooks (typically 2) */
   semanticCodebooks: number;
+
+  /**
+   * Optional URL to a real DAC encoder ONNX model.
+   * When provided, initialize() attempts to load it via onnxruntime-web.
+   * Falls back to the stub if the package or model is unavailable.
+   */
+  encoderOnnxUrl?: string;
+
+  /**
+   * Optional URL to a real DAC decoder ONNX model.
+   */
+  decoderOnnxUrl?: string;
 }
 
 /**
@@ -84,6 +96,14 @@ export class DACCodec {
   private initialized: boolean = false;
   private codebookEmbeddings: Float32Array[] = [];
   private frameSize: number;
+  /** True when a real ONNX encoder was loaded. */
+  private hasRealEncoder = false;
+  /** True when a real ONNX decoder was loaded. */
+  private hasRealDecoder = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private encoderSession: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private decoderSession: any = null;
 
   constructor(config: Partial<DACConfig> = {}) {
     this.config = { ...DEFAULT_DAC_CONFIG, ...config };
@@ -91,22 +111,37 @@ export class DACCodec {
   }
 
   /**
-   * Initialize the codec (load models, allocate buffers)
-   * 
-   * TODO Phase 2.1: Load actual DAC model weights
-   * - Download pre-trained DAC checkpoint
-   * - Initialize encoder/decoder networks
-   * - Set up ONNX Runtime or TensorFlow.js
+   * Initialize the codec.
+   *
+   * If encoderOnnxUrl / decoderOnnxUrl are set, attempts to load them
+   * via the ONNX scaffold. Otherwise (or on failure) uses the stub.
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     console.log('[DAC] Initializing codec...');
     this.ensureCodebooks(this.config);
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
+
+    if (this.config.encoderOnnxUrl || this.config.decoderOnnxUrl) {
+      try {
+        const { loadOnnxSession } = await import('../inference/onnxScaffold');
+        if (this.config.encoderOnnxUrl) {
+          this.encoderSession = await loadOnnxSession({ modelUrl: this.config.encoderOnnxUrl });
+          this.hasRealEncoder = true;
+          console.log('[DAC] Real ONNX encoder loaded');
+        }
+        if (this.config.decoderOnnxUrl) {
+          this.decoderSession = await loadOnnxSession({ modelUrl: this.config.decoderOnnxUrl });
+          this.hasRealDecoder = true;
+          console.log('[DAC] Real ONNX decoder loaded');
+        }
+      } catch (err) {
+        console.warn('[DAC] ONNX load failed, falling back to stub:', err);
+      }
+    }
+
     this.initialized = true;
-    console.log('[DAC] Codec initialized');
+    console.log(`[DAC] Codec initialized (encoder=${this.hasRealEncoder ? 'onnx' : 'stub'}, decoder=${this.hasRealDecoder ? 'onnx' : 'stub'})`);
   }
 
   /**

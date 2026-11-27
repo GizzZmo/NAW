@@ -63,7 +63,7 @@
 
 ## 🚧 Known Limitations (v1.6)
 
-1. **Neural audio models** – DAC, CLAP inference, trained ControlNet, vocoder, Flow Matching, and generative inpainting remain architecture + stubs. No pretrained weights are loaded.
+1. **Neural audio models** – DAC, CLAP inference, trained ControlNet, vocoder, Flow Matching, and generative inpainting remain architecture + stubs. An ONNX Runtime Web scaffold is now present (`neural-engine/inference/onnxScaffold.ts`); DACCodec can optionally load real encoder/decoder ONNX files when URLs are provided. No pretrained weights are shipped.
 2. **Audio export** – Synthesized WAV mixdown of prototype oscillators is available. Independent neural stems and DAW project formats (Ableton, Logic, Pro Tools) are still planned.
 3. **Per-track metering** – True RMS via per-track AnalyserNodes is implemented. Full multi-output DSP graph with independent effects chains remains future work.
 4. **API protection** – Basic in-memory rate limiting (10/min) and optional `NAW_API_KEY` are in place. Distributed/persistent limiting (Redis/KV) is still recommended before public deploy.

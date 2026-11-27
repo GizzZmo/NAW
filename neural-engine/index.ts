@@ -87,12 +87,21 @@ export {
   decodeMix,
 } from './vocoder/Vocoder';
 
+// ONNX inference scaffold (real model path — no weights shipped)
+export {
+  tryLoadOrt,
+  loadOnnxSession,
+  runOnnxInference,
+  validateInferenceOutput,
+  type OnnxSessionOptions,
+  type OnnxInferenceResult,
+} from './inference/onnxScaffold';
+
 /**
  * Neural Engine version
  */
 export const NEURAL_ENGINE_VERSION = '0.2.0-alpha';
 
-// Utility exports
 export {
   type QualityPreset,
   getQualityPresetConfig,
@@ -114,13 +123,14 @@ export {
 } from './utils/helpers';
 
 /**
- * Check if neural engine is ready for use
- * 
- * Currently returns false as Phase 2 is in development.
- * Will return true once all components are implemented.
+ * Check if neural engine is ready for production use.
+ *
+ * Returns false while components remain architecture + stubs.
+ * Returns true only when real pretrained weights are loaded and
+ * inference produces validated audio (see CAPABILITY_STATUS.md).
  */
 export function isNeuralEngineReady(): boolean {
-  return true;
+  return false;
 }
 
 /**
@@ -129,6 +139,7 @@ export function isNeuralEngineReady(): boolean {
 export interface NeuralEngineStatus {
   version: string;
   ready: boolean;
+  /** True only when a real pretrained model is loaded for that component. */
   components: {
     codec: boolean;
     planner: boolean;
@@ -138,25 +149,28 @@ export interface NeuralEngineStatus {
     inpainting: boolean;
     vocoder: boolean;
   };
+  notes: string;
 }
 
 /**
- * Get current status of neural engine components
+ * Get current status of neural engine components.
+ * All components are currently stubs; none have pretrained weights.
  */
 export function getNeuralEngineStatus(): NeuralEngineStatus {
   const components = {
-    codec: true,
-    planner: true,
-    renderer: true,
-    controlNet: true,
-    clap: true,
-    inpainting: true,
-    vocoder: true,
+    codec: false,
+    planner: false,
+    renderer: false,
+    controlNet: false,
+    clap: false,
+    inpainting: false,
+    vocoder: false,
   };
 
   return {
     version: NEURAL_ENGINE_VERSION,
-    ready: true,
+    ready: false,
     components,
+    notes: 'Architecture + stubs only. No pretrained weights loaded. See neural-engine/CAPABILITY_STATUS.md.',
   };
 }
