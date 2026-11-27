@@ -79,6 +79,50 @@ export interface AgentSettings {
   modelOverride?: string;
 }
 
+/** Basic format checks per provider. Returns an error message or null if valid. */
+export function validateApiKey(provider: ProviderId, apiKey: string): string | null {
+  const key = apiKey.trim();
+  if (!key) return null; // empty is allowed (server env fallback)
+
+  if (key.length < 8 || key.length > 512) {
+    return 'API key length looks wrong (8–512 characters).';
+  }
+  if (/\s/.test(key)) {
+    return 'API key should not contain spaces.';
+  }
+
+  switch (provider) {
+    case 'gemini':
+      if (!/^AIza[0-9A-Za-z_\-]{20,}$/.test(key)) {
+        return 'Gemini keys usually start with "AIza" followed by a long token.';
+      }
+      break;
+    case 'openai':
+      if (!/^sk-[A-Za-z0-9_\-]{20,}$/.test(key) && !/^sk-proj-[A-Za-z0-9_\-]{20,}$/.test(key)) {
+        return 'OpenAI keys usually start with "sk-" or "sk-proj-".';
+      }
+      break;
+    case 'grok':
+      if (!/^xai-[A-Za-z0-9_\-]{20,}$/.test(key)) {
+        return 'xAI Grok keys usually start with "xai-".';
+      }
+      break;
+    case 'anthropic':
+      if (!/^sk-ant-[A-Za-z0-9_\-]{20,}$/.test(key)) {
+        return 'Anthropic keys usually start with "sk-ant-".';
+      }
+      break;
+    case 'openrouter':
+      if (!/^sk-or-[A-Za-z0-9_\-]{20,}$/.test(key)) {
+        return 'OpenRouter keys usually start with "sk-or-".';
+      }
+      break;
+    default:
+      break;
+  }
+  return null;
+}
+
 const DEFAULT_SETTINGS: AgentSettings = {
   provider: 'gemini',
   apiKey: '',

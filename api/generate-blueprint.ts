@@ -21,6 +21,29 @@ interface GenerationOptions {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+function validateKeyFormat(provider: string, key: string): string | null {
+  if (key.length < 8 || key.length > 512) return 'API key length looks wrong (8–512 characters).';
+  if (/\s/.test(key)) return 'API key should not contain spaces.';
+  switch (provider) {
+    case 'gemini':
+      if (!/^AIza[0-9A-Za-z_\-]{20,}$/.test(key)) return 'Gemini keys usually start with "AIza".';
+      break;
+    case 'openai':
+      if (!/^sk-[A-Za-z0-9_\-]{20,}$/.test(key) && !/^sk-proj-[A-Za-z0-9_\-]{20,}$/.test(key)) return 'OpenAI keys usually start with "sk-" or "sk-proj-".';
+      break;
+    case 'grok':
+      if (!/^xai-[A-Za-z0-9_\-]{20,}$/.test(key)) return 'xAI Grok keys usually start with "xai-".';
+      break;
+    case 'anthropic':
+      if (!/^sk-ant-[A-Za-z0-9_\-]{20,}$/.test(key)) return 'Anthropic keys usually start with "sk-ant-".';
+      break;
+    case 'openrouter':
+      if (!/^sk-or-[A-Za-z0-9_\-]{20,}$/.test(key)) return 'OpenRouter keys usually start with "sk-or-".';
+      break;
+  }
+  return null;
+}
+
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
@@ -117,6 +140,14 @@ export default async function handler(req: ApiRequest & { headers?: Record<strin
     return res.status(400).json({
       error: `No API key for provider "${provider}". Enter one in the Agent settings or set the matching env var on the server.`,
     });
+  }
+
+  // Basic format validation when a user-supplied key is present
+  if (userKey) {
+    const err = validateKeyFormat(provider, userKey);
+    if (err) {
+      return res.status(400).json({ error: err });
+    }
   }
 
   const genOptions: GenerationOptions = {

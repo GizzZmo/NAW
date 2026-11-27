@@ -6,7 +6,7 @@ import {
 import { INITIAL_TRACKS, TOTAL_BARS, PIXELS_PER_BAR, STEM_COLORS, TRACK_HEIGHT } from './constants';
 import { PRESETS } from './data/presets';
 import { generateSongBlueprint, type SongBlueprint } from './services/geminiService';
-import { loadAgentSettings, saveAgentSettings, PROVIDERS, type ProviderId, type AgentSettings } from './services/agentSettings';
+import { loadAgentSettings, saveAgentSettings, PROVIDERS, validateApiKey, type ProviderId, type AgentSettings } from './services/agentSettings';
 import { audioEngine } from './services/audioEngine';
 import { audioWorkletEngine } from './services/audio/AudioWorkletEngine';
 import { midiService } from './services/midi/MidiService';
@@ -249,6 +249,11 @@ const App: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!mainPrompt.trim()) return;
+    const keyErr = validateApiKey(agentSettings.provider, agentSettings.apiKey);
+    if (keyErr) {
+      window.alert(keyErr);
+      return;
+    }
     setProject(prev => ({ ...prev, generationStage: 'PLANNING', generationProgress: 10 }));
     let blueprint: SongBlueprint;
     try {
@@ -693,6 +698,10 @@ const App: React.FC = () => {
                   }}
                   className="w-full bg-slate-800 border border-slate-600 rounded text-xs p-1.5 text-white"
                 />
+                {(() => {
+                  const err = validateApiKey(agentSettings.provider, agentSettings.apiKey);
+                  return err ? <div className="text-[10px] text-amber-400">{err}</div> : null;
+                })()}
                 <label className="text-[11px] text-slate-400">Model override (optional)</label>
                 <input
                   type="text"
