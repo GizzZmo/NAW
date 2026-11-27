@@ -27,7 +27,20 @@ Bridging generative AI and professional music production workflows
 
 ---
 
-## What is NAW?
+## Local development
+
+The API routes live in `api/` and are Vercel serverless functions.  
+`vite` alone does not serve them, so generation returns **404** unless you also run the local API:
+
+```bash
+npm install
+npm run dev:local    # starts API on :3001 and Vite on :3000 (proxied)
+# or separately:
+npm run dev:api      # terminal 1
+npm run dev          # terminal 2
+```
+
+Set provider API keys in the sidebar **AI Agent** panel (or via server env vars).
 
 NAW is a browser-based Digital Audio Workstation that combines **stem-level AI music generation** with professional production tools.
 

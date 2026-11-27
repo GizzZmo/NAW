@@ -14,7 +14,7 @@ import {
  */
 export const DspExplorer: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [params, setParams] = useState<TrackEffectsParams>({ ...DEFAULT_EFFECTS });
-  const [playing, setPlaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const chainRef = useRef<TrackChain | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -22,36 +22,49 @@ export const DspExplorer: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const ensureGraph = async () => {
     if (ctxRef.current) return;
-    const ctx = new AudioContext();
-    ctxRef.current = ctx;
+    try {
+      const ctx = new AudioContext();
+      if (ctx.state === 'suspended') await ctx.resume();
+      ctxRef.current = ctx;
 
-    const chain = createTrackChain(ctx, params);
-    chainRef.current = chain;
+      const chain = createTrackChain(ctx, params);
+      chainRef.current = chain;
 
-    const reverb = ctx.createConvolver();
-    reverb.buffer = createSimpleReverbIR(ctx, 1.8, 2.2);
-    reverbRef.current = reverb;
-    chain.reverbSend.connect(reverb);
-    reverb.connect(chain.output);
+      const reverb = ctx.createConvolver();
+      reverb.buffer = createSimpleReverbIR(ctx, 1.8, 2.2);
+      reverbRef.current = reverb;
+      chain.reverbSend.connect(reverb);
+      reverb.connect(chain.output);
 
-    chain.output.connect(ctx.destination);
+      chain.output.connect(ctx.destination);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError('Audio init failed: ' + msg);
+      throw err;
+    }
   };
 
   const start = async () => {
-    await ensureGraph();
-    const ctx = ctxRef.current!;
-    if (ctx.state === 'suspended') await ctx.resume();
+    setError(null);
+    try {
+      await ensureGraph();
+      const ctx = ctxRef.current!;
+      if (ctx.state === 'suspended') await ctx.resume();
 
-    const osc = ctx.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.value = 110;
-    const gain = ctx.createGain();
-    gain.gain.value = 0.25;
-    osc.connect(gain);
-    gain.connect(chainRef.current!.input);
-    osc.start();
-    oscRef.current = osc;
-    setPlaying(true);
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 110;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.25;
+      osc.connect(gain);
+      gain.connect(chainRef.current!.input);
+      osc.start();
+      oscRef.current = osc;
+      setPlaying(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError('Playback failed: ' + msg);
+    }
   };
 
   const stop = () => {
@@ -81,9 +94,11 @@ export const DspExplorer: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <h2 className="text-lg font-semibold">Web Audio DSP Explorer</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
         </div>
-        <p className="text-xs text-slate-400 mb-4">
-          Test tone → EQ (low/mid/high) → compressor → delay → reverb → output
-        </p>
+        {error && (
+          <div className="mb-3 text-xs text-red-400 bg-red-950/40 border border-red-800 rounded p-2">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3 text-xs">
           <label className="flex flex-col">Low shelf (dB)

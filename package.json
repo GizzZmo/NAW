@@ -1,7 +1,7 @@
 {
   "name": "neural-audio-workstation-(naw)",
   "private": true,
-  "version": "1.8.1",
+  "version": "1.8.2",
   "type": "module",
   "packageManager": "pnpm@9.15.9",
   "scripts": {
@@ -36,6 +36,7 @@
     "postcss": "^8.5.23",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.21.0",
+    "concurrently": "^9.1.0",
     "typescript": "~5.8.2",
     "vite": "^6.4.5"
   }
