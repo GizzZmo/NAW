@@ -97,6 +97,14 @@ export {
   type OnnxInferenceResult,
 } from './inference/onnxScaffold';
 
+// Real text-to-music (MusicGen-small via Transformers.js)
+export {
+  generateWithMusicGen,
+  generateMusicGenWav,
+  type MusicGenOptions,
+  type MusicGenResult,
+} from './inference/musicgen';
+
 /**
  * Neural Engine version
  */

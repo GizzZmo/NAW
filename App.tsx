@@ -16,6 +16,7 @@ import { PianoRoll } from './components/PianoRoll';
 import { PromptLane } from './components/PromptLane';
 import { ExportModal } from './components/ExportModal';
 import { renderProjectToWav, downloadBlob, exportWavStems } from './services/audio/OfflineRenderer';
+import { generateMusicGenWav } from './neural-engine/inference/musicgen';
 import { AboutModal } from './components/AboutModal';
 import { 
   Play, Pause, Square, Mic, Wand2, Layers, Sliders, Info, MoreHorizontal, 
@@ -95,6 +96,8 @@ const App: React.FC = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExportingWav, setIsExportingWav] = useState(false);
   const [isExportingStems, setIsExportingStems] = useState(false);
+  const [musicGenStatus, setMusicGenStatus] = useState<string | null>(null);
+  const [isMusicGenRunning, setIsMusicGenRunning] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
   const [workletReady, setWorkletReady] = useState(false);
@@ -641,6 +644,41 @@ const App: React.FC = () => {
           </div>
           <div className="text-xs text-slate-500">
             Style: {styleAdapter} · Strength {styleStrength}% · Temp {temperature}
+          </div>
+
+          <div className="rounded border border-slate-600 p-3 bg-slate-900/40">
+            <div className="text-xs font-semibold text-slate-300 mb-1">Try real neural audio</div>
+            <p className="text-[11px] text-slate-500 mb-2 leading-snug">
+              MusicGen-small (browser, ~656 MB first download, CC-BY-NC). Generates actual audio, not just notes.
+            </p>
+            <button
+              onClick={async () => {
+                if (!mainPrompt.trim()) {
+                  alert('Enter a prompt first.');
+                  return;
+                }
+                setIsMusicGenRunning(true);
+                setMusicGenStatus('Starting...');
+                try {
+                  const { blob } = await generateMusicGenWav(mainPrompt, {
+                    maxNewTokens: 192,
+                    onProgress: (stage, p) => setMusicGenStatus(`${stage} ${Math.round(p * 100)}%`),
+                  });
+                  downloadBlob(blob, `naw-musicgen-${Date.now()}.wav`);
+                  setMusicGenStatus('Done — WAV downloaded');
+                } catch (err) {
+                  console.error(err);
+                  setMusicGenStatus('Failed: ' + (err instanceof Error ? err.message : String(err)));
+                } finally {
+                  setIsMusicGenRunning(false);
+                }
+              }}
+              disabled={isMusicGenRunning}
+              className="w-full py-1.5 text-xs bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold rounded"
+            >
+              {isMusicGenRunning ? 'Generating…' : 'Generate with MusicGen'}
+            </button>
+            {musicGenStatus && <div className="text-[11px] text-slate-400 mt-1">{musicGenStatus}</div>}
           </div>
           {midiDevices.length > 0 && (
             <div className="text-xs">

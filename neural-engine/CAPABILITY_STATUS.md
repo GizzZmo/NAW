@@ -14,6 +14,7 @@ This document distinguishes implemented application behavior from planned model 
 | Per-track metering | True RMS (v1.6) | Per-track AnalyserNodes provide real RMS from the live synthesis graph. |
 | Audio export | Synthesized WAV mixdown + stems (v1.6.1) | OfflineAudioContext render of prototype oscillators to WAV (mixdown and per-track stems). Neural stem export still pending. |
 | ONNX inference path | Scaffold ready | `neural-engine/inference/onnxScaffold.ts` + optional `onnxruntime-web`. Callers supply a `.onnx` URL. No model weights are shipped. |
+| MusicGen (real) | Optional, client-side | `neural-engine/inference/musicgen.ts` loads `Xenova/musicgen-small` via `@huggingface/transformers`. First run downloads ~656 MB. Produces real audio. License CC-BY-NC-4.0. |
 | API protection | Rate limiting + optional key (v1.6) | In-memory 10 req/min per client + optional `NAW_API_KEY` header check. Ephemeral on serverless. |
 
 ## Product behavior
