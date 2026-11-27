@@ -1,4 +1,4 @@
-# Neural Engine Capability Status (NAW 1.6)
+# Neural Engine Capability Status (NAW 1.8)
 
 This document distinguishes implemented application behavior from planned model architecture. Class names and architecture diagrams do not imply that pretrained model weights or production inference are present.
 

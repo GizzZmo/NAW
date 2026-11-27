@@ -19,15 +19,20 @@ This document describes the public API of NAW's service layer modules. These ser
 **Module**: `services/geminiService.ts` (client) + `api/generate-blueprint.ts` (server)  
 **Purpose**: AI-powered semantic planning (Stage 1 of hybrid architecture)
 
-As of v1.4 the Gemini call is **server-side**. The client never receives the `GEMINI_API_KEY`.
-
-### Endpoint: `POST /api/generate-blueprint`
+As of v1.7 the endpoint accepts an optional `agent` object so the user can select a provider and supply their own API key. The server prefers the user key and falls back to the matching environment variable.
 
 **Request body:**
 ```json
 {
   "prompt": "Uplifting house track with deep bass",
   "bpm": 128,
+  "options": { "styleAdapter": "Techno", "styleStrength": 0.8, "temperature": 0.7 },
+  "agent": { "provider": "gemini", "apiKey": "AIza…", "modelOverride": "" }
+}
+```
+
+Supported providers: `gemini`, `openai`, `grok`, `anthropic`, `openrouter`.  
+User-supplied keys are validated by prefix and length.
   "options": {
     "styleAdapter": "Techno",
     "styleStrength": 0.7,

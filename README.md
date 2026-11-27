@@ -5,7 +5,7 @@
 **A Production-Grade AI Music Creation Environment**  
 Bridging generative AI and professional music production workflows
 
-[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.8.1-green.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-orange.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 
@@ -31,20 +31,41 @@ Bridging generative AI and professional music production workflows
 
 NAW is a browser-based Digital Audio Workstation that combines **stem-level AI music generation** with professional production tools.
 
-**Current (v1.6) behavior:** NAW generates **editable symbolic note patterns** (MIDI-style events) via Google Gemini. It does **not** yet generate high-fidelity audio waveforms. Real neural audio models (DAC, CLAP, Flow Matching, vocoders) remain architectural stubs with no pretrained weights loaded.
+**Current (v1.8) behavior:** NAW generates **editable symbolic note patterns** (MIDI-style events) via a choice of AI agents (Gemini, OpenAI, Grok, Anthropic, OpenRouter). It also includes a real browser-side MusicGen-small path for actual audio, independent per-track Web Audio DSP chains, and a live DSP Explorer. Full pretrained DAC / CLAP / Flow Matching weights are not shipped; ONNX hooks are ready for callers who supply model URLs.
 
 The architecture is designed so those models can be plugged in later without rewriting the UI or scheduling layer.
 
 ---
 
-## Key Features (v1.6)
+## Key Features (v1.8)
 
-### Symbolic Generation (Gemini)
-- Server-side `/api/generate-blueprint` endpoint (Gemini key never shipped to the browser)
-- Style Adapters: Jazz, Techno, Orchestral, Lo-fi, Ambient, Hip-hop
-- Style Strength and Temperature controls
-- Per-clip regenerate
-- Basic rate limiting (10/min) + optional `NAW_API_KEY` header check
+### Symbolic Generation (Multi-Agent)
+- Sidebar **AI Agent** panel: choose provider (Gemini, OpenAI, xAI Grok, Anthropic, OpenRouter)
+- User-supplied API keys stored in localStorage and sent with each request
+- Provider-specific key validation (prefix and length checks)
+- Server falls back to matching env var if no user key is present
+- Style Adapters, Style Strength, Temperature, per-clip regenerate
+
+### Real Neural Audio
+- **MusicGen-small** path (`neural-engine/inference/musicgen.ts`) via `@huggingface/transformers`
+- First run downloads ~656 MB; subsequent runs use the browser cache
+- Sidebar “Try real neural audio” button produces a downloadable WAV
+- License: CC-BY-NC-4.0
+
+### Audio & DSP
+- AudioWorklet engine with look-ahead scheduler and true RMS metering
+- Independent per-track DSP chains (`services/audio/TrackEffectsChain.ts`): EQ, compressor, delay, reverb send
+- Live **DSP Explorer** UI for experimenting with the chain on a test tone
+- Synthesized WAV mixdown and per-track stems (OfflineAudioContext)
+
+### Export & Project
+- MIDI track download
+- DAW project JSON export (`services/audio/DawProjectExport.ts`) with optional stem references
+
+### Infrastructure
+- Distributed rate limiting (`api/rateLimit.ts`): Vercel KV → Upstash Redis → in-memory fallback
+- Optional `NAW_API_KEY` header gate
+- ONNX scaffolds for DAC, CLAP, and ControlNet (supply a model URL to activate)
 
 ### AudioWorklet Engine
 - Dedicated DSP thread with look-ahead scheduler

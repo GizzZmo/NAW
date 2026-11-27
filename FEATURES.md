@@ -1,15 +1,40 @@
 # NAW Features Documentation
 
-> **Current Implementation Status (v1.6) and Future Feature Roadmap**
+> **Current Implementation Status (v1.8) and Future Feature Roadmap**
 
-## 🚀 v1.6 Features (Current)
+## 🚀 v1.8 Features (Current)
 
-### Security & Generation
-- ✅ Gemini calls moved to server-side `/api/generate-blueprint` (key never in client bundle)
-- ✅ Request validation (prompt length, BPM range) and model output sanitization
-- ✅ Honest status: generates symbolic note patterns only, not high-fidelity audio
-- ✅ In-memory rate limiting (10 requests/minute per client)
-- ✅ Optional `NAW_API_KEY` header check (enable by setting the environment variable)
+### Multi-Agent Symbolic Generation
+- ✅ Sidebar AI Agent panel (Gemini, OpenAI, Grok, Anthropic, OpenRouter)
+- ✅ User API keys stored in localStorage; sent with each request
+- ✅ Provider-specific key validation (prefixes, length, no spaces)
+- ✅ Server env-var fallbacks (`GEMINI_API_KEY`, `OPENAI_API_KEY`, etc.)
+- ✅ Style Adapters, Strength, Temperature, per-clip regenerate
+
+### Real Neural Audio
+- ✅ MusicGen-small browser path (`neural-engine/inference/musicgen.ts`)
+- ✅ ~656 MB first download (cached); produces real WAV audio
+- ✅ Sidebar “Try real neural audio” button
+
+### Audio & DSP
+- ✅ AudioWorklet engine, look-ahead scheduler, true RMS metering
+- ✅ Independent per-track Web Audio DSP chains (EQ, compressor, delay, reverb)
+- ✅ Live DSP Explorer UI
+- ✅ Synthesized WAV mixdown and per-track stems
+
+### Export & Infrastructure
+- ✅ MIDI track download
+- ✅ DAW project JSON export with optional stem references
+- ✅ Distributed rate limiting (Vercel KV / Upstash Redis / memory)
+- ✅ Optional `NAW_API_KEY` header gate
+- ✅ ONNX loading hooks for DAC, CLAP, ControlNet (no weights shipped)
+
+### Still Planned
+- ⬜ Full pretrained DAC + Flow Matching weights
+- ⬜ Real CLAP embeddings from uploaded audio
+- ⬜ Trained ControlNet adapters
+- ⬜ Neural stem export (vs. oscillator stems)
+- ⬜ Ableton / Logic / Pro Tools project formats
 
 ### AudioWorklet Engine
 - ✅ Look-ahead scheduler with input validation
