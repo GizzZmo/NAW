@@ -11,7 +11,11 @@ This document distinguishes implemented application behavior from planned model 
 | CLAP conditioning | Architecture + stub | Reference filename is descriptive text context only; uploaded audio is not embedded. |
 | ControlNet adapters | Prompt-level controls | Style selections modify prompt context; trained adapters are not loaded. |
 | Spectrogram inpainting | UI + stub | The UI/workflow is not connected to a trained generative inpainting model. |
-| Per-track metering | True RMS (v1.6) | Per-track AnalyserNodes provide real RMS from the live synthesis graph. |
+| Per-track DSP | Real Web Audio chains (v1.8) | `services/audio/TrackEffectsChain.ts` provides independent EQ, compressor, delay, reverb-send, and gain per track. |
+| DAW project export | JSON project + stem refs (v1.8) | `services/audio/DawProjectExport.ts` serializes tracks, clips, notes, and optional stem filenames. |
+| Distributed rate limiting | Redis / Vercel KV + memory fallback (v1.8) | `api/rateLimit.ts` prefers Vercel KV, then Upstash Redis REST, then in-memory. |
+| Discrete diffusion inpainting | Algorithmic helper (v1.8) | `neural-engine/inpainting/discreteDiffusion.ts` implements a mask-and-denoise loop over codebook tokens. Model-driven prediction is optional. |
+| CLAP / ControlNet / DAC / Flow Matching | Architecture + ONNX hooks | Optional `*OnnxUrl` fields on configs. No pretrained weights are shipped; callers supply model URLs. |
 | Audio export | Synthesized WAV mixdown + stems (v1.6.1) | OfflineAudioContext render of prototype oscillators to WAV (mixdown and per-track stems). Neural stem export still pending. |
 | ONNX inference path | Scaffold ready | `neural-engine/inference/onnxScaffold.ts` + optional `onnxruntime-web`. Callers supply a `.onnx` URL. No model weights are shipped. |
 | MusicGen (real) | Optional, client-side | `neural-engine/inference/musicgen.ts` loads `Xenova/musicgen-small` via `@huggingface/transformers`. First run downloads ~656 MB. Produces real audio. License CC-BY-NC-4.0. |

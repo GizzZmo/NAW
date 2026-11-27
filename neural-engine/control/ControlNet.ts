@@ -48,6 +48,12 @@ export interface ControlNetConfig {
   
   /** Dimension of control embeddings */
   embedDim: number;
+
+  /**
+   * Optional URL to a real ControlNet adapter ONNX model.
+   * When provided, initialize() will attempt to load it.
+   */
+  adapterOnnxUrl?: string;
 }
 
 /**

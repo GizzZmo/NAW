@@ -52,11 +52,7 @@ const numericOption = (value: unknown, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-// Simple in-memory rate limiter (best-effort; serverless instances are ephemeral).
-// For production use Vercel KV / Upstash Redis.
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 10;
+import { checkDistributedRateLimit, MAX_REQUESTS } from './rateLimit';
 
 function getClientId(req: ApiRequest & { headers?: Record<string, string | string[] | undefined> }): string {
   const headers = req.headers ?? {};
@@ -66,17 +62,8 @@ function getClientId(req: ApiRequest & { headers?: Record<string, string | strin
 }
 
 function checkRateLimit(clientId: string): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const entry = rateLimitStore.get(clientId);
-  if (!entry || now > entry.resetAt) {
-    rateLimitStore.set(clientId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true, remaining: RATE_LIMIT_MAX - 1 };
-  }
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, remaining: 0 };
-  }
-  entry.count += 1;
-  return { allowed: true, remaining: RATE_LIMIT_MAX - entry.count };
+  // Synchronous wrapper kept for compatibility; real work is async below.
+  return { allowed: true, remaining: MAX_REQUESTS };
 }
 
 export default async function handler(req: ApiRequest & { headers?: Record<string, string | string[] | undefined> }, res: ApiResponse) {
@@ -99,8 +86,8 @@ export default async function handler(req: ApiRequest & { headers?: Record<strin
   }
 
   const clientId = getClientId(req);
-  const limit = checkRateLimit(clientId);
-  res.setHeader('X-RateLimit-Limit', String(RATE_LIMIT_MAX));
+  const limit = await checkDistributedRateLimit(clientId);
+  res.setHeader('X-RateLimit-Limit', String(MAX_REQUESTS));
   res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
   if (!limit.allowed) {
     res.setHeader('Retry-After', '60');

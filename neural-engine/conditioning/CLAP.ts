@@ -36,6 +36,12 @@ export interface CLAPConfig {
   
   /** Model checkpoint path */
   checkpointPath: string;
+
+  /**
+   * Optional URL to a real CLAP audio encoder ONNX model.
+   * When provided, extractAudioEmbedding will attempt to use it.
+   */
+  audioEncoderOnnxUrl?: string;
 }
 
 /**
