@@ -101,6 +101,7 @@ const App: React.FC = () => {
   const [isMusicGenRunning, setIsMusicGenRunning] = useState(false);
   const [agentSettings, setAgentSettings] = useState<AgentSettings>(() => loadAgentSettings());
   const [showAgentPanel, setShowAgentPanel] = useState(false);
+  const [showDspExplorer, setShowDspExplorer] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
   const [workletReady, setWorkletReady] = useState(false);
@@ -767,6 +768,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2 px-4 py-2 bg-naw-surface border-b border-slate-700">
             <button onClick={() => setViewMode('ARRANGEMENT')} className={`px-3 py-1 text-sm rounded ${viewMode === 'ARRANGEMENT' ? 'bg-naw-accent text-slate-900' : 'text-slate-300'}`}>Arrangement</button>
             <button onClick={() => setViewMode('MIXER')} className={`px-3 py-1 text-sm rounded ${viewMode === 'MIXER' ? 'bg-naw-accent text-slate-900' : 'text-slate-300'}`}>Mixer</button>
+            <button onClick={() => setShowDspExplorer(true)} className="px-3 py-1 text-sm rounded text-slate-300 hover:bg-slate-700">DSP Explorer</button>
           </div>
 
           {viewMode === 'ARRANGEMENT' ? (
@@ -821,8 +823,9 @@ const App: React.FC = () => {
 
       <footer className="flex items-center justify-between px-4 py-1 bg-naw-panel border-t border-slate-700 text-xs text-slate-500">
         <span>GPU: Neural Engine Active</span>
-        <span className="text-slate-600">v1.4 — Symbolic Generation</span>
+        <span className="text-slate-600">v1.8 — DSP chains + multi-agent</span>
       </footer>
+      {showDspExplorer && <DspExplorer onClose={() => setShowDspExplorer(false)} />}
     </div>
   );
 };
